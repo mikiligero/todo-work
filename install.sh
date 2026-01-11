@@ -33,7 +33,32 @@ fi
 if [ -d "$APP_DIR" ]; then
     echo -e "${BLUE}Updating existing application...${NC}"
     cd "$APP_DIR"
-    git pull
+    
+    # BACKUP DATABASE & ENV
+    if [ -f "prisma/dev.db" ]; then
+        echo -e "${BLUE}Backing up database...${NC}"
+        cp prisma/dev.db /tmp/todo-kines-db.backup
+    fi
+    if [ -f ".env" ]; then
+        cp .env /tmp/todo-kines-env.backup
+    fi
+
+    # FORCE UPDATE
+    # This solves conflicts by forcing the local state to match remote
+    git fetch --all
+    git reset --hard origin/main
+    
+    # RESTORE DATABASE
+    if [ -f "/tmp/todo-kines-db.backup" ]; then
+        echo -e "${BLUE}Restoring database...${NC}"
+        # Ensure dir exists
+        mkdir -p prisma 
+        cp /tmp/todo-kines-db.backup prisma/dev.db
+    fi
+     # RESTORE ENV if needed (usually reset --hard doesn't touch untracked files like .env, but good to be safe)
+    if [ ! -f ".env" ] && [ -f "/tmp/todo-kines-env.backup" ]; then
+        cp /tmp/todo-kines-env.backup .env
+    fi
 else
     echo -e "${BLUE}Cloning repository...${NC}"
     git clone "$REPO_URL" "$APP_DIR"
