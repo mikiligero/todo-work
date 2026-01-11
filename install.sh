@@ -61,7 +61,10 @@ fi
 # 6. Database Setup
 echo -e "${BLUE}Setting up database...${NC}"
 npx prisma generate
-npx prisma migrate deploy
+if ! npx prisma migrate deploy; then
+    echo -e "${BLUE}Migration failed. Attempting db push...${NC}"
+    npx prisma db push
+fi
 
 # 7. Build Application
 echo -e "${BLUE}Building application...${NC}"
