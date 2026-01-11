@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 
-const SECRET_KEY = process.env.JWT_SECRET || 'default-secret-key-change-it'
+const SECRET_KEY = process.env.AUTH_SECRET || process.env.JWT_SECRET || 'default-secret-key-change-it'
 const key = new TextEncoder().encode(SECRET_KEY)
 
 export async function hashPassword(password: string): Promise<string> {
@@ -33,7 +33,8 @@ export async function decrypt(input: string): Promise<any> {
 }
 
 export async function getSession() {
-    const session = (await cookies()).get('session')?.value
+    const cookieStore = await cookies()
+    const session = cookieStore.get('session')?.value
     if (!session) return null
     return await decrypt(session)
 }
@@ -41,10 +42,13 @@ export async function getSession() {
 export async function createSession(userId: string) {
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     const session = await encrypt({ userId, expires })
-    
-    ;(await cookies()).set('session', session, {
+
+    const cookieStore = await cookies()
+    cookieStore.set('session', session, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        // Disable secure in production if we are not using HTTPS (common in local LXC/Proxmox)
+        // You can enable it by setting REQUIRE_SECURE_AUTH=true in .env
+        secure: process.env.REQUIRE_SECURE_AUTH === 'true',
         expires,
         sameSite: 'lax',
         path: '/',
@@ -52,5 +56,5 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
-    ;(await cookies()).delete('session')
+    ; (await cookies()).delete('session')
 }
