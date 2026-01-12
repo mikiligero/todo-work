@@ -5,7 +5,8 @@ import { getUsers, createUser } from '@/app/actions/admin'
 import Link from 'next/link'
 import { ArrowLeft, UserPlus, Shield } from 'lucide-react'
 import { AdminCreateUserForm, AdminUserList, ExportDataButton, ImportDataButton } from '@/components/AdminComponents'
-
+import { NotificationSettingsForm } from '@/components/NotificationSettingsForm'
+import { getNotificationSettings } from '@/app/actions/notifications'
 
 export default async function AdminPage() {
     const session = await getSession()
@@ -14,7 +15,10 @@ export default async function AdminPage() {
     const currentUser = await prisma.user.findUnique({ where: { id: session.userId } })
     if (!currentUser?.isAdmin) redirect('/')
 
-    const users = await getUsers()
+    const [users, notificationSettings] = await Promise.all([
+        getUsers(),
+        getNotificationSettings()
+    ])
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
@@ -33,7 +37,7 @@ export default async function AdminPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     {/* User List */}
                     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
                         <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">Users</h2>
@@ -49,6 +53,9 @@ export default async function AdminPage() {
                         <AdminCreateUserForm />
                     </div>
                 </div>
+
+                {/* Notification Settings */}
+                <NotificationSettingsForm settings={notificationSettings} />
             </div>
         </div>
     )

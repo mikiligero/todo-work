@@ -23,6 +23,8 @@ model User {
   createdTasks    Task[]     @relation("CreatedTasks")
   assignedTasks   Task[]     @relation("AssignedTasks")
   sharedTasks     Task[]     @relation("SharedTasks")
+
+  notificationSettings NotificationSettings?
 }
 
 model Category {
