@@ -83,3 +83,26 @@ model SubTask {
   
   createdAt DateTime @default(now())
 }
+
+model NotificationSettings {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  enabled     Boolean  @default(false)
+  
+  // Telegram Config
+  telegramBotToken String?
+  telegramChatId   String?
+  
+  // Schedule (HH:MM)
+  mondayTime    String   @default("08:00")
+  tuesdayTime   String   @default("08:00")
+  wednesdayTime String   @default("08:00")
+  thursdayTime  String   @default("08:00")
+  fridayTime    String   @default("08:00")
+  saturdayTime  String   @default("09:00")
+  sundayTime    String   @default("09:00")
+  
+  lastSentAt    DateTime?
+}
