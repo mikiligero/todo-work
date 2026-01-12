@@ -97,12 +97,19 @@ model NotificationSettings {
   
   // Schedule (HH:MM)
   mondayTime    String   @default("08:00")
+  mondayEnabled Boolean  @default(true)
   tuesdayTime   String   @default("08:00")
+  tuesdayEnabled Boolean @default(true)
   wednesdayTime String   @default("08:00")
+  wednesdayEnabled Boolean @default(true)
   thursdayTime  String   @default("08:00")
+  thursdayEnabled Boolean @default(true)
   fridayTime    String   @default("08:00")
+  fridayEnabled Boolean  @default(true)
   saturdayTime  String   @default("09:00")
+  saturdayEnabled Boolean @default(true)
   sundayTime    String   @default("09:00")
+  sundayEnabled Boolean  @default(true)
   
   lastSentAt    DateTime?
 }

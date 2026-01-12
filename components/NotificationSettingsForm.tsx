@@ -39,13 +39,13 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
     }
 
     const days = [
-        { key: 'mondayTime', label: 'Lunes' },
-        { key: 'tuesdayTime', label: 'Martes' },
-        { key: 'wednesdayTime', label: 'Miércoles' },
-        { key: 'thursdayTime', label: 'Jueves' },
-        { key: 'fridayTime', label: 'Viernes' },
-        { key: 'saturdayTime', label: 'Sábado' },
-        { key: 'sundayTime', label: 'Domingo' },
+        { key: 'mondayTime', enabledKey: 'mondayEnabled', label: 'Lunes' },
+        { key: 'tuesdayTime', enabledKey: 'tuesdayEnabled', label: 'Martes' },
+        { key: 'wednesdayTime', enabledKey: 'wednesdayEnabled', label: 'Miércoles' },
+        { key: 'thursdayTime', enabledKey: 'thursdayEnabled', label: 'Jueves' },
+        { key: 'fridayTime', enabledKey: 'fridayEnabled', label: 'Viernes' },
+        { key: 'saturdayTime', enabledKey: 'saturdayEnabled', label: 'Sábado' },
+        { key: 'sundayTime', enabledKey: 'sundayEnabled', label: 'Domingo' },
     ]
 
     return (
@@ -112,7 +112,7 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                                     className="sr-only peer"
                                 />
                                 <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
-                                <span className="ml-3 text-sm font-medium text-zinc-900 dark:text-zinc-300">Activar Notificaciones</span>
+                                <span className="ml-3 text-sm font-medium text-zinc-900 dark:text-zinc-300">Activar Notificaciones (Global)</span>
                             </label>
                         </div>
 
@@ -150,17 +150,26 @@ export function NotificationSettingsForm({ settings }: NotificationSettingsFormP
                     {/* Schedule */}
                     <div className="space-y-4">
                         <label className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
-                            Horario de Envío
+                            Horario de Envío por Día
                         </label>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        <div className="space-y-3">
                             {days.map(day => (
-                                <div key={day.key} className="flex items-center justify-between">
-                                    <span className="text-sm text-zinc-600 dark:text-zinc-400">{day.label}</span>
+                                <div key={day.key} className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-zinc-800">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            name={day.enabledKey}
+                                            defaultChecked={settings?.[day.enabledKey] ?? true}
+                                            className="w-4 h-4 text-indigo-600 bg-zinc-100 border-zinc-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-zinc-800 focus:ring-2 dark:bg-zinc-700 dark:border-zinc-600"
+                                        />
+                                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{day.label}</span>
+                                    </div>
                                     <input
                                         type="time"
                                         name={day.key}
                                         defaultValue={settings?.[day.key] || '08:00'}
-                                        className="px-2 py-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-md text-sm focus:border-indigo-500 outline-none dark:text-white"
+                                        disabled={settings?.[day.enabledKey] === false}
+                                        className="px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-md text-sm focus:border-indigo-500 outline-none dark:text-white disabled:opacity-50"
                                     />
                                 </div>
                             ))}

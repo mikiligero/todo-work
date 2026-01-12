@@ -31,9 +31,11 @@ async function checkAndSendNotifications() {
             // 2. Check Schedule
             // Map day to field name: mondayTime, tuesdayTime...
             const timeField = `${currentDay}Time` as keyof typeof settings
+            const enabledField = `${currentDay}Enabled` as keyof typeof settings
             const scheduledTime = settings[timeField]
+            const isDayEnabled = settings[enabledField]
 
-            if (scheduledTime === currentTime) {
+            if (isDayEnabled && scheduledTime === currentTime) {
                 // 3. Check Throttling (avoid sending multiple times within the same minute if cron overlaps, or same day)
                 // Actually we just want to ensure we sent it "today". 
                 // Using lastSentAt.

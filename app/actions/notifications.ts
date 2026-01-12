@@ -25,13 +25,18 @@ export async function saveNotificationSettings(formData: FormData) {
     const telegramChatId = formData.get('telegramChatId') as string
 
     // Schedule
-    const mondayTime = formData.get('mondayTime') as string || '08:00'
-    const tuesdayTime = formData.get('tuesdayTime') as string || '08:00'
-    const wednesdayTime = formData.get('wednesdayTime') as string || '08:00'
-    const thursdayTime = formData.get('thursdayTime') as string || '08:00'
-    const fridayTime = formData.get('fridayTime') as string || '08:00'
-    const saturdayTime = formData.get('saturdayTime') as string || '09:00'
-    const sundayTime = formData.get('sundayTime') as string || '09:00'
+    const getDayData = (day: string) => ({
+        time: formData.get(`${day}Time`) as string || (day === 'saturday' || day === 'sunday' ? '09:00' : '08:00'),
+        enabled: formData.get(`${day}Enabled`) === 'on'
+    })
+
+    const monday = getDayData('monday')
+    const tuesday = getDayData('tuesday')
+    const wednesday = getDayData('wednesday')
+    const thursday = getDayData('thursday')
+    const friday = getDayData('friday')
+    const saturday = getDayData('saturday')
+    const sunday = getDayData('sunday')
 
     try {
         await prisma.notificationSettings.upsert({
@@ -40,26 +45,40 @@ export async function saveNotificationSettings(formData: FormData) {
                 enabled,
                 telegramBotToken,
                 telegramChatId,
-                mondayTime,
-                tuesdayTime,
-                wednesdayTime,
-                thursdayTime,
-                fridayTime,
-                saturdayTime,
-                sundayTime
+                mondayTime: monday.time,
+                mondayEnabled: monday.enabled,
+                tuesdayTime: tuesday.time,
+                tuesdayEnabled: tuesday.enabled,
+                wednesdayTime: wednesday.time,
+                wednesdayEnabled: wednesday.enabled,
+                thursdayTime: thursday.time,
+                thursdayEnabled: thursday.enabled,
+                fridayTime: friday.time,
+                fridayEnabled: friday.enabled,
+                saturdayTime: saturday.time,
+                saturdayEnabled: saturday.enabled,
+                sundayTime: sunday.time,
+                sundayEnabled: sunday.enabled
             },
             create: {
                 userId: session.userId,
                 enabled,
                 telegramBotToken,
                 telegramChatId,
-                mondayTime,
-                tuesdayTime,
-                wednesdayTime,
-                thursdayTime,
-                fridayTime,
-                saturdayTime,
-                sundayTime
+                mondayTime: monday.time,
+                mondayEnabled: monday.enabled,
+                tuesdayTime: tuesday.time,
+                tuesdayEnabled: tuesday.enabled,
+                wednesdayTime: wednesday.time,
+                wednesdayEnabled: wednesday.enabled,
+                thursdayTime: thursday.time,
+                thursdayEnabled: thursday.enabled,
+                fridayTime: friday.time,
+                fridayEnabled: friday.enabled,
+                saturdayTime: saturday.time,
+                saturdayEnabled: saturday.enabled,
+                sundayTime: sunday.time,
+                sundayEnabled: sunday.enabled
             }
         })
 
