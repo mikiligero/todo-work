@@ -104,16 +104,11 @@ export async function sendTestNotification() {
         return { error: 'Please configure Chat ID first' }
     }
 
-    const token = settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN
-    if (!token) {
-        return { error: 'No Bot Token configured (System or User)' }
-    }
-
-    const result = await sendTelegramMessage(token, settings.telegramChatId, "👋 *Hola desde Todo-Kines*\n\nSi lees esto, la configuración es correcta. Recibirás tus resúmenes diarios aquí.")
-
-    if (result.success) {
+    try {
+        await sendDailyDigest(session.userId, settings.telegramBotToken, settings.telegramChatId)
         return { success: true }
-    } else {
-        return { error: result.error || 'Failed to send message' }
+    } catch (e) {
+        console.error(e)
+        return { error: 'Failed to send test message' }
     }
 }
