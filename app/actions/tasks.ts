@@ -46,10 +46,10 @@ export async function getPendingTasks() {
     })
 
     const importanceMap: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 }
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const nextWeek = new Date(today)
-    nextWeek.setDate(today.getDate() + 7)
+    const sortReferenceDate = new Date()
+    sortReferenceDate.setHours(0, 0, 0, 0)
+    const nextWeek = new Date(sortReferenceDate)
+    nextWeek.setDate(sortReferenceDate.getDate() + 7)
 
     return tasks.sort((a, b) => {
         // Helper to get group: 1 = Next 7 Days, 2 = No Date, 3 = Future
@@ -330,10 +330,10 @@ export async function getSharedTasks() {
     })
 
     const importanceMap: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 }
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const nextWeek = new Date(today)
-    nextWeek.setDate(today.getDate() + 7)
+    const sortReferenceDate = new Date()
+    sortReferenceDate.setHours(0, 0, 0, 0)
+    const nextWeek = new Date(sortReferenceDate)
+    nextWeek.setDate(sortReferenceDate.getDate() + 7)
 
     const sortedTasks = tasks.sort((a, b) => {
         // 1. Sort by completed status first
