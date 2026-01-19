@@ -148,25 +148,36 @@ export async function getCategoryWithTasks(id: string) {
     if (!category) return null
 
     const importanceMap: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 }
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const nextWeek = new Date(today)
+    nextWeek.setDate(today.getDate() + 7)
 
     category.tasks.sort((a, b) => {
         // 1. Keep pending tasks first
         if (a.completed !== b.completed) return a.completed ? 1 : -1
 
-        // 2. Sort by dueDate
-        if (a.dueDate && b.dueDate) {
-            const dateDiff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-            if (dateDiff !== 0) return dateDiff
-        } else if (a.dueDate) {
-            return -1
-        } else if (b.dueDate) {
-            return 1
+        // Helper to get group: 1 = Next 7 Days, 2 = No Date, 3 = Future
+        const getGroup = (t: typeof category.tasks[0]) => {
+            if (!t.dueDate) return 2
+            return new Date(t.dueDate) <= nextWeek ? 1 : 3
         }
 
-        // 3. Sort by Importance
+        const groupA = getGroup(a)
+        const groupB = getGroup(b)
+
+        if (groupA !== groupB) return groupA - groupB
+
+        // Within group, sort by Importance
         const pA = importanceMap[a.importance] || 2
         const pB = importanceMap[b.importance] || 2
-        return pA - pB
+        if (pA !== pB) return pA - pB
+
+        // Tie breaker: Date
+        if (a.dueDate && b.dueDate) {
+            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+        }
+        return 0
     })
 
     return category

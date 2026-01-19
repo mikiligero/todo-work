@@ -90,14 +90,20 @@ async function sendDailyDigest(userId: string, botToken: string | null, chatId: 
 
     const expiringToday = tasks.filter(t => t.dueDate && t.dueDate >= todayStart && t.dueDate <= todayEnd)
     const upcoming = tasks.filter(t => t.dueDate && t.dueDate > todayEnd && t.dueDate <= nextWeek)
-    // High priority: tasks with importance 'High'
-    const highPriority = tasks.filter(t => t.importance === 'High')
 
-    if (expiringToday.length === 0 && upcoming.length === 0 && highPriority.length === 0) {
-        return // Do not send if nothing to report? Or send "All clear"? User might prefer silence.
+    // High priority: tasks with importance 'High' AND NO DATE
+    // (If they have a date, they are already in expiringToday or upcoming, or ignored if > 7 days)
+    const highPriorityNoDate = tasks.filter(t => t.importance === 'High' && !t.dueDate)
+
+    if (expiringToday.length === 0 && upcoming.length === 0 && highPriorityNoDate.length === 0) {
+        return
     }
 
     let message = `🌅 *Resumen Diario Todo-Kines*\n\n`
+
+    // Section 1: Next 7 Days (Today + Upcoming)
+    // We can merge them for "Próximos 7 días" or keep "Vencen Hoy" for urgency.
+    // Let's keep "Vencen Hoy" separate for emphasis, then "Próximos 7 días" for the rest.
 
     if (expiringToday.length > 0) {
         message += `🚨 *Vencen Hoy:*\n`
@@ -114,9 +120,9 @@ async function sendDailyDigest(userId: string, botToken: string | null, chatId: 
         message += `\n`
     }
 
-    if (highPriority.length > 0) {
-        message += `🔥 *Prioridad Alta (Pendientes):*\n`
-        highPriority.forEach(t => message += `• ${t.title}\n`)
+    if (highPriorityNoDate.length > 0) {
+        message += `🔥 *Prioridad Alta (Sin Fecha):*\n`
+        highPriorityNoDate.forEach(t => message += `• ${t.title}\n`)
     }
 
     await sendTelegramMessage(token, chatId, message)
