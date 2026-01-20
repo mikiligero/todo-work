@@ -303,16 +303,17 @@ function TaskDetailModal({
 }: any) {
     const isOwner = !currentUserId || task.creatorId === currentUserId
     return (
+    return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={onClose}>
             <div
-                className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+                className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
+                <div className="p-5 md:p-6 overflow-y-auto custom-scrollbar">
                     <div className="flex items-start gap-4 mb-6">
                         <button
-                            onClick={handleToggle}
-                            className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mt-1 ${isCompleted
+                            onClick={(e) => { e.stopPropagation(); handleToggle(e); }}
+                            className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors mt-1 relative z-10 ${isCompleted
                                 ? 'bg-zinc-400 border-zinc-400 dark:bg-zinc-600 dark:border-zinc-600'
                                 : 'border-zinc-300 dark:border-zinc-600 hover:border-indigo-500'
                                 }`}
