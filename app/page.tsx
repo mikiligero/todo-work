@@ -10,6 +10,7 @@ import prisma from '@/lib/prisma'
 import { Sidebar } from '@/components/Sidebar'
 import { Settings, Shield } from 'lucide-react'
 import { CategoryCard } from '@/components/CategoryCard'
+import { AutoRefresh } from '@/components/AutoRefresh'
 
 
 async function getUser(userId: string) {
@@ -114,6 +115,7 @@ export default async function Home() {
       </main>
 
       <ActionFab categories={categories} />
+      <AutoRefresh />
     </div>
   )
 }

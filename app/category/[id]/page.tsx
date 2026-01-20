@@ -10,6 +10,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { ChevronLeft, ListTodo, CheckCircle2, Users } from 'lucide-react'
 import { CategoryHeaderActions } from '@/components/CategoryHeaderActions'
 import { ClearCompletedButton } from '@/components/ClearCompletedButton'
+import { AutoRefresh } from '@/components/AutoRefresh'
 import prisma from '@/lib/prisma'
 
 export default async function CategoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -110,6 +111,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ id: s
             </main>
 
             <ActionFab categories={allCategories} />
+            <AutoRefresh />
         </div>
     )
 }
