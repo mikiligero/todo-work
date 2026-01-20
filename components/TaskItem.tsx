@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toggleTaskCompletion, deleteTask, updateTask, shareTask, unshareTask } from '@/app/actions/tasks'
 import { createSubTask, toggleSubTask, deleteSubTask, updateSubTask } from '@/app/actions/subtasks'
 import { Check, Calendar, ChevronDown, ChevronUp, Plus, Trash2, ListTodo, Edit2, X, RotateCcw, Share2, Users, CheckCircle2, Pencil, Repeat, AlignLeft } from 'lucide-react'
@@ -24,6 +24,11 @@ export function TaskItem({ task, categories, allUsers, currentUserId }: TaskItem
     const [showDetailModal, setShowDetailModal] = useState(false)
     const [editingSubtask, setEditingSubtask] = useState<any>(null)
 
+    // Sync state when prop updates (e.g. from server refresh)
+    useEffect(() => {
+        setIsCompleted(task.completed)
+    }, [task.completed])
+
     // Sort subtasks locally just in case, though query helper does it
     const subtasks = task.subtasks || []
     const completedSubtasks = subtasks.filter((st: any) => st.completed).length
@@ -32,11 +37,24 @@ export function TaskItem({ task, categories, allUsers, currentUserId }: TaskItem
 
     const handleToggle = async (e?: React.MouseEvent) => {
         e?.stopPropagation()
+        console.log('Toggling task:', task.title, isCompleted)
+
+        if (isPending) return
+
         const newState = !isCompleted
         setIsCompleted(newState)
         setIsPending(true)
-        await toggleTaskCompletion(task.id, newState)
-        setIsPending(false)
+
+        try {
+            await toggleTaskCompletion(task.id, newState)
+            console.log('Task toggled successfully')
+        } catch (error) {
+            console.error('Failed to toggle task:', error)
+            // Revert on error
+            setIsCompleted(!newState)
+        } finally {
+            setIsPending(false)
+        }
     }
 
     const handleDelete = async (e?: React.MouseEvent) => {
