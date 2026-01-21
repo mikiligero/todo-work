@@ -44,39 +44,37 @@ if [ -d "$APP_DIR" ]; then
     fi
 
     # FORCE UPDATE
-    # This solves conflicts by forcing the local state to match remote
     git fetch --all
     git reset --hard origin/main
     
     # RESTORE DATABASE
     if [ -f "/tmp/todo-work-db.backup" ]; then
         echo -e "${BLUE}Restoring database...${NC}"
-        # Ensure dir exists
         mkdir -p prisma 
         cp /tmp/todo-work-db.backup prisma/dev.db
     fi
-     # RESTORE ENV if needed (usually reset --hard doesn't touch untracked files like .env, but good to be safe)
+     # RESTORE ENV if needed
     if [ ! -f ".env" ] && [ -f "/tmp/todo-work-env.backup" ]; then
         cp /tmp/todo-work-env.backup .env
     fi
-    
-    # FIX DATABASE URL TO ABSOLUTE PATH (Fixes P2021 "Table not found" in standalone)
-    # If the URL is file:./dev.db or file:dev.db, change it to file:/opt/todo-work/prisma/dev.db
-    if [ -f ".env" ]; then
-        # Use sed to replace relative paths with full absolute path
-        sed -i 's|file:\./dev.db|file:'$APP_DIR'/prisma/dev.db|g' .env
-        sed -i 's|file:dev.db|file:'$APP_DIR'/prisma/dev.db|g' .env
-        # Also ensure it points to prisma/dev.db even if it was ./prisma/dev.db
-        sed -i 's|file:\./prisma/dev.db|file:'$APP_DIR'/prisma/dev.db|g' .env
-    fi
-    
-    # ENSURE TIMEZONE IS SET
-    if [ -f ".env" ] && ! grep -q "TZ=" .env; then
-        echo "TZ=\"Europe/Madrid\"" >> .env
-    fi
 else
     echo -e "${BLUE}Cloning repository...${NC}"
-    git clone "$REPO_URL" "$APP_DIR"
+    # LEGACY SUPPORT: Check if old project exists to migrate data
+    if [ -d "/opt/todo-kines" ]; then
+        echo -e "${BLUE}Found legacy todo-kines installation. Preparing migration...${NC}"
+        mkdir -p "$APP_DIR/prisma"
+        if [ -f "/opt/todo-kines/prisma/dev.db" ]; then
+            cp "/opt/todo-kines/prisma/dev.db" "$APP_DIR/prisma/dev.db"
+            echo -e "${GREEN}Legacy database migrated.${NC}"
+        fi
+        if [ -f "/opt/todo-kines/.env" ]; then
+            cp "/opt/todo-kines/.env" "$APP_DIR/.env"
+            # Update paths in legacy .env
+            sed -i "s|/opt/todo-kines|${APP_DIR}|g" "$APP_DIR/.env"
+        fi
+    fi
+
+    git clone "$REPO_URL" "$APP_DIR" || (mkdir -p "$APP_DIR" && cd "$APP_DIR" && git init && git remote add origin "$REPO_URL" && git fetch && git checkout -f main)
     cd "$APP_DIR"
 fi
 
@@ -87,26 +85,30 @@ npm install
 # 5. Environment Configuration
 if [ ! -f .env ]; then
     echo -e "${BLUE}Creating .env file...${NC}"
-    # Generate a secure random string for AUTH_SECRET if needed, currently using a placeholder or openssl
     AUTH_SECRET=$(openssl rand -base64 32)
     
     cat > .env <<EOL
 DATABASE_URL="file:${APP_DIR}/prisma/dev.db"
 AUTH_SECRET="${AUTH_SECRET}"
-AUTH_SECRET="${AUTH_SECRET}"
 TZ="Europe/Madrid"
-# Add other env vars here if needed
 EOL
     echo -e "${GREEN}.env created.${NC}"
+else
+    # Ensure DATABASE_URL is absolute and correct even in existing .env
+    sed -i "s|DATABASE_URL=.*|DATABASE_URL=\"file:${APP_DIR}/prisma/dev.db\"|g" .env
 fi
 
 # 6. Database Setup
 echo -e "${BLUE}Setting up database...${NC}"
+mkdir -p prisma
 npx prisma generate
-if ! npx prisma migrate deploy; then
-    echo -e "${BLUE}Migration failed. Attempting db push...${NC}"
-    npx prisma db push
+# Try migrate deploy first (for production stability if folder exists), otherwise db push
+if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations)" ]; then
+    npx prisma migrate deploy || npx prisma db push --accept-data-loss
+else
+    npx prisma db push --accept-data-loss
 fi
+npx prisma generate # Regenerate after schema sync to be safe
 
 # 7. Build Application
 echo -e "${BLUE}Building application...${NC}"
@@ -141,6 +143,11 @@ WantedBy=multi-user.target
 EOL
 
 systemctl daemon-reload
+if systemctl is-active --quiet todo-kines; then
+    echo -e "${BLUE}Stopping legacy todo-kines service...${NC}"
+    systemctl stop todo-kines
+    systemctl disable todo-kines
+fi
 systemctl enable todo-work
 systemctl restart todo-work
 
