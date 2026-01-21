@@ -17,8 +17,8 @@ model User {
   isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  ownedCategories Category[] @relation("OwnedCategories")
-  sharedCategories Category[] @relation("SharedCategories")
+  ownedProjects  Project[] @relation("OwnedProjects")
+  sharedProjects Project[] @relation("SharedProjects")
 
   createdTasks    Task[]     @relation("CreatedTasks")
   assignedTasks   Task[]     @relation("AssignedTasks")
@@ -27,17 +27,32 @@ model User {
   notificationSettings NotificationSettings?
 }
 
-model Category {
+model Project {
   id      String @id @default(uuid())
   name    String
   color   String // Hex code or generic color name
   ownerId String
-  owner   User   @relation("OwnedCategories", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner   User   @relation("OwnedProjects", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  sharedWith User[] @relation("SharedCategories")
+  sharedWith User[] @relation("SharedProjects")
   tasks      Task[]
+  columns    KanbanColumn[]
 
   createdAt DateTime @default(now())
+}
+
+model KanbanColumn {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int      @default(0)
+  
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  tasks     Task[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Task {
@@ -46,7 +61,12 @@ model Task {
   description String?
   importance  String   @default("Medium") // Low, Medium, High
   dueDate     DateTime?
-  completed   Boolean  @default(false)
+  status      String   @default("TODO") // BACKLOG, TODO, IN_PROGRESS, REVIEW, DONE
+  
+  columnId    String?
+  column      KanbanColumn? @relation(fields: [columnId], references: [id], onDelete: SetNull)
+
+  // Removed completed boolean in favor of status
 
   isRecurring    Boolean   @default(false)
   recurrenceInterval String? // daily, weekly, monthly, yearly
@@ -56,14 +76,15 @@ model Task {
   
   reminder    DateTime?
 
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   creatorId   String
   creator     User     @relation("CreatedTasks", fields: [creatorId], references: [id])
 
   assigneeId  String?
   assignee    User?    @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  assigneeName String?
 
   sharedWith  User[]   @relation("SharedTasks")
 

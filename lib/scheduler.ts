@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 import prisma from '@/lib/prisma'
 import { sendTelegramMessage } from './telegram'
-import { getPendingTasks } from '@/app/actions/tasks'
+// import { getPendingTasks } from '@/app/actions/tasks'
 
 // We need a way to mock session context for getPendingTasks or reimplement the query...
 // Implementing a customized query for the scheduler is safer as it runs without a user session context.
@@ -82,9 +82,9 @@ export async function sendDailyDigest(userId: string, botToken: string | null, c
                 { creatorId: userId },
                 { assigneeId: userId },
                 { sharedWith: { some: { id: userId } } },
-                { category: { sharedWith: { some: { id: userId } } } }
+                { project: { sharedWith: { some: { id: userId } } } }
             ],
-            completed: false
+            status: { not: 'DONE' }
         }
     })
 
@@ -99,7 +99,7 @@ export async function sendDailyDigest(userId: string, botToken: string | null, c
         return
     }
 
-    let message = `🌅 *Resumen Diario Todo-Kines*\n\n`
+    let message = `🌅 *Resumen Diario Todo-Work*\n\n`
 
     // Section 1: Next 7 Days (Today + Upcoming)
     // We can merge them for "Próximos 7 días" or keep "Vencen Hoy" for urgency.

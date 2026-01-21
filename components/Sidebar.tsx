@@ -3,23 +3,23 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Settings, Shield, Edit2, LogOut } from 'lucide-react'
-import { CategorySettingsModal } from './CategorySettingsModal'
+import { ProjectSettingsModal } from './ProjectSettingsModal'
 import { logout } from '@/app/actions/auth'
 
 interface SidebarProps {
     user: any
-    categories: any[]
+    projects: any[]
     allUsers?: any[]
 }
 
-export function Sidebar({ user, categories, allUsers }: SidebarProps) {
-    const [editingCategory, setEditingCategory] = useState<any>(null)
+export function Sidebar({ user, projects, allUsers }: SidebarProps) {
+    const [editingProject, setEditingProject] = useState<any>(null)
 
     return (
         <aside className="w-64 border-r border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900 hidden md:flex flex-col">
             <div className="flex items-center gap-2 mb-6 px-2">
                 <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg" />
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Todo Kines</h2>
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Todo Work</h2>
             </div>
             <nav className="space-y-1 flex-1">
                 <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">
@@ -27,27 +27,26 @@ export function Sidebar({ user, categories, allUsers }: SidebarProps) {
                 </Link>
 
                 <div className="pt-6 pb-2 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider flex justify-between items-center">
-                    <span>Categories</span>
-                    {/* Could add a mini plus button here too */}
+                    <span>Projects</span>
                 </div>
                 <div className="space-y-0.5">
-                    {categories.map(cat => (
-                        <div key={cat.id} className="flex items-center gap-2 group w-full px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }}></div>
-                            <Link href={`/category/${cat.id}`} className="truncate flex-1 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                                {cat.name}
+                    {projects.map(proj => (
+                        <div key={proj.id} className="flex items-center gap-2 group w-full px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: proj.color }}></div>
+                            <Link href={`/project/${proj.id}`} className="truncate flex-1 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                                {proj.name}
                             </Link>
-                            {cat._count.tasks > 0 && (
+                            {proj._count?.tasks > 0 && (
                                 <span className="text-[10px] bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded-full text-zinc-600 dark:text-zinc-300">
-                                    {cat._count.tasks}
+                                    {proj._count.tasks}
                                 </span>
                             )}
-                            {cat.ownerId === user.id && (
+                            {proj.ownerId === user.id && (
                                 <button
                                     onClick={(e) => {
                                         e.preventDefault()
                                         e.stopPropagation()
-                                        setEditingCategory(cat)
+                                        setEditingProject(proj)
                                     }}
                                     className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-indigo-600 transition-all rounded-md"
                                 >
@@ -78,11 +77,11 @@ export function Sidebar({ user, categories, allUsers }: SidebarProps) {
                 </button>
             </div>
 
-            {editingCategory && (
-                <CategorySettingsModal
-                    category={editingCategory}
+            {editingProject && (
+                <ProjectSettingsModal
+                    project={editingProject}
                     allUsers={allUsers}
-                    onClose={() => setEditingCategory(null)}
+                    onClose={() => setEditingProject(null)}
                 />
             )}
         </aside>

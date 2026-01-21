@@ -5,12 +5,9 @@ import { getSession } from '@/lib/auth-utils'
 import { revalidatePath } from 'next/cache'
 
 
-export async function getPendingTasks() {
+export async function getActiveTasks() {
     const session = await getSession()
     if (!session?.userId) return []
-
-    const today = new Date()
-    today.setHours(23, 59, 59, 999)
 
     const tasks = await prisma.task.findMany({
         where: {
@@ -18,13 +15,13 @@ export async function getPendingTasks() {
                 { creatorId: session.userId },
                 { assigneeId: session.userId },
                 { sharedWith: { some: { id: session.userId } } },
-                { category: { sharedWith: { some: { id: session.userId } } } },
-                { category: { ownerId: session.userId } }
+                { project: { sharedWith: { some: { id: session.userId } } } },
+                { project: { ownerId: session.userId } }
             ],
-            completed: false,
+            status: { not: 'DONE' },
         },
         include: {
-            category: true,
+            project: true,
             subtasks: {
                 orderBy: { createdAt: 'asc' }
             },
@@ -38,6 +35,12 @@ export async function getPendingTasks() {
                 select: {
                     username: true
                 }
+            },
+            assignee: {
+                select: {
+                    id: true,
+                    username: true
+                }
             }
         },
         orderBy: {
@@ -46,12 +49,19 @@ export async function getPendingTasks() {
     })
 
     const importanceMap: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 }
+    const statusOrder: Record<string, number> = { 'BACKLOG': 4, 'TODO': 1, 'IN_PROGRESS': 0, 'REVIEW': 2, 'DONE': 3 }
+
     const sortReferenceDate = new Date()
     sortReferenceDate.setHours(0, 0, 0, 0)
     const nextWeek = new Date(sortReferenceDate)
     nextWeek.setDate(sortReferenceDate.getDate() + 7)
 
     return tasks.sort((a, b) => {
+        // 0. Sort by Status Priority
+        const sA = statusOrder[a.status] || 99
+        const sB = statusOrder[b.status] || 99
+        if (sA !== sB) return sA - sB
+
         // Helper to get group: 1 = Next 7 Days, 2 = No Date, 3 = Future
         const getGroup = (t: typeof tasks[0]) => {
             if (!t.dueDate) return 2
@@ -82,19 +92,35 @@ export async function createTask(formData: FormData) {
     if (!session?.userId) return { error: 'Unauthorized' }
 
     const title = formData.get('title') as string
-    const categoryId = formData.get('categoryId') as string
+    const projectId = formData.get('projectId') as string
     const importance = formData.get('importance') as string
+    const status = formData.get('status') as string
     const dueDateStr = formData.get('dueDate') as string
 
-    if (!title || !categoryId || categoryId === "") return { error: 'Category is required' }
+    if (!title || !projectId || projectId === "") return { error: 'Project is required' }
 
     try {
+        let finalColumnId = formData.get('columnId') as string || null
+
+        // If no column ID provided, try to find the first column of project
+        if (!finalColumnId && (!status || status !== 'BACKLOG')) {
+            const firstCol = await prisma.kanbanColumn.findFirst({
+                where: { projectId },
+                orderBy: { order: 'asc' }
+            })
+            if (firstCol) {
+                finalColumnId = firstCol.id
+            }
+        }
+
         await prisma.task.create({
             data: {
                 title,
-                categoryId,
+                projectId,
                 description: formData.get('description') as string,
                 importance: importance || 'Medium',
+                status: status || 'TODO',
+                columnId: finalColumnId,
                 dueDate: dueDateStr ? new Date(dueDateStr) : null,
                 creatorId: session.userId,
                 // Recurrence
@@ -103,6 +129,8 @@ export async function createTask(formData: FormData) {
                 recurrenceWeekDays: formData.get('recurrenceWeekDays') as string,
                 recurrenceDayOfMonth: formData.get('recurrenceDayOfMonth') ? parseInt(formData.get('recurrenceDayOfMonth') as string) : null,
                 recurrenceEndDate: formData.get('recurrenceEndDate') ? new Date(formData.get('recurrenceEndDate') as string) : null,
+                assigneeId: formData.get('assigneeId') as string || null,
+                assigneeName: formData.get('assigneeName') as string || null,
             }
         })
         revalidatePath('/')
@@ -113,72 +141,75 @@ export async function createTask(formData: FormData) {
     }
 }
 
-export async function toggleTaskCompletion(id: string, completed: boolean) {
+export async function updateTaskStatus(id: string, statusOrColumnId: string) {
     const session = await getSession()
     if (!session?.userId) return { error: 'Unauthorized' }
 
     try {
-        if (completed) {
+        // If it looks like a column ID (UUID), treat as column move
+        const isColumnId = statusOrColumnId.length > 20 && statusOrColumnId.includes('-')
+
+        if (isColumnId) {
+            await prisma.task.update({
+                where: { id },
+                data: { columnId: statusOrColumnId }
+            })
+            revalidatePath('/')
+            return { success: true }
+        }
+
+        // Checks for legacy string status (BACKLOG, etc.)
+        const status = statusOrColumnId
+        const validStatuses = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']
+        if (!validStatuses.includes(status)) return { error: 'Invalid status' }
+
+        if (status === 'DONE') {
             const task = await prisma.task.findUnique({ where: { id } })
             if (task && task.isRecurring && task.dueDate) {
                 // Determine next due date
                 let nextDate = new Date(task.dueDate)
                 const today = new Date()
 
-                // If the due date is in the past, we should calculate the next occurrence from TODAY, otherwise from the due date
-                // Actually, standard behavior is usually from the due date to keep the schedule, unless it's way behind.
-                // Let's stick to generating from the current due date to maintain the pattern (e.g. every Monday)
-
-                // However, to ensure it jumps to the future:
                 while (nextDate <= today) {
                     if (task.recurrenceInterval === 'daily') {
                         nextDate.setDate(nextDate.getDate() + 1)
                     } else if (task.recurrenceInterval === 'weekly') {
-                        // Simple +7 for now, or use weekDays logic
-                        // For MVP, if specific days are set, we find the next match
                         if (task.recurrenceWeekDays) {
                             const days = task.recurrenceWeekDays.split(',').map(Number).sort()
-                            // Find next day in the list
                             let found = false
-                            // limit lookahead to 2 weeks to avoid infinite loops
                             for (let i = 1; i <= 14; i++) {
                                 nextDate.setDate(nextDate.getDate() + 1)
-                                const day = nextDate.getDay() // 0-6
-                                // Adjust 0 (Sun) to match 7 if needed, but let's assume 0-6 input
+                                const day = nextDate.getDay()
                                 if (days.includes(day)) {
                                     found = true
                                     break
                                 }
                             }
-                            if (!found) nextDate.setDate(nextDate.getDate() + 1) // Fallback
+                            if (!found) nextDate.setDate(nextDate.getDate() + 1)
                         } else {
                             nextDate.setDate(nextDate.getDate() + 7)
                         }
                     } else if (task.recurrenceInterval === 'monthly') {
                         nextDate.setMonth(nextDate.getMonth() + 1)
                         if (task.recurrenceDayOfMonth) {
-                            // Handle edge cases like Feb 30? JS handles overflow by moving to next month
                             nextDate.setDate(task.recurrenceDayOfMonth)
                         }
                     } else if (task.recurrenceInterval === 'yearly') {
                         nextDate.setFullYear(nextDate.getFullYear() + 1)
                     } else {
-                        // Default fallback
                         nextDate.setDate(nextDate.getDate() + 1)
                     }
                 }
 
-                // Check end date
                 if (task.recurrenceEndDate && nextDate > task.recurrenceEndDate) {
-                    // Stop recurring, just mark completed
-                    await prisma.task.update({ where: { id }, data: { completed: true } })
+                    await prisma.task.update({ where: { id }, data: { status: 'DONE' } })
                 } else {
-                    // Reschedule: Update due date, keep completed = false
+                    // Reschedule
                     await prisma.task.update({
                         where: { id },
                         data: {
                             dueDate: nextDate,
-                            completed: false
+                            status: 'TODO' // Reset to TODO or Backlog? TODO seems right
                         }
                     })
                 }
@@ -189,14 +220,14 @@ export async function toggleTaskCompletion(id: string, completed: boolean) {
 
         await prisma.task.update({
             where: { id },
-            data: { completed } // Normal completion
+            data: { status }
         })
         revalidatePath('/')
         return { success: true }
 
     } catch (e) {
         console.error(e)
-        return { error: 'Failed to update task' }
+        return { error: 'Failed to update task status' }
     }
 }
 
@@ -205,27 +236,31 @@ export async function updateTask(id: string, formData: FormData) {
     if (!session?.userId) return { error: 'Unauthorized' }
 
     const title = formData.get('title') as string
-    const categoryId = formData.get('categoryId') as string
+    const projectId = formData.get('projectId') as string
     const importance = formData.get('importance') as string
+    const status = formData.get('status') as string
     const dueDateStr = formData.get('dueDate') as string
 
-    if (!title || !categoryId) return { error: 'Title and Category are required' }
+    if (!title || !projectId) return { error: 'Title and Project are required' }
 
     try {
         await prisma.task.update({
             where: { id },
             data: {
                 title,
-                categoryId,
+                projectId,
                 description: formData.get('description') as string,
                 importance: importance || 'Medium',
+                status: status || 'TODO',
+                columnId: formData.get('columnId') as string || null,
                 dueDate: dueDateStr ? new Date(dueDateStr) : null,
-                // Recurrence
                 isRecurring: formData.get('isRecurring') === 'on',
                 recurrenceInterval: formData.get('recurrenceInterval') as string,
                 recurrenceWeekDays: formData.get('recurrenceWeekDays') as string,
                 recurrenceDayOfMonth: formData.get('recurrenceDayOfMonth') ? parseInt(formData.get('recurrenceDayOfMonth') as string) : null,
                 recurrenceEndDate: formData.get('recurrenceEndDate') ? new Date(formData.get('recurrenceEndDate') as string) : null,
+                assigneeId: formData.get('assigneeId') as string || null,
+                assigneeName: formData.get('assigneeName') as string || null,
             }
         })
         revalidatePath('/')
@@ -249,6 +284,52 @@ export async function deleteTask(id: string) {
     } catch (e) {
         return { error: 'Failed to delete task' }
     }
+}
+
+export async function getSuggestedAssignees() {
+    const session = await getSession()
+    if (!session?.userId) return []
+
+    // Get unique custom names from tasks
+    const tasks = await prisma.task.findMany({
+        where: {
+            creatorId: session.userId,
+            assigneeName: { not: null }
+        },
+        select: { assigneeName: true },
+        distinct: ['assigneeName']
+    })
+
+    const customNames = tasks
+        .map(t => t.assigneeName)
+        .filter((name): name is string => !!name)
+
+    // Get registered users (including self)
+    const users = await prisma.user.findMany({
+        select: { id: true, username: true }
+    })
+
+    const userSuggestions = users.map(u => ({
+        id: u.id,
+        username: u.username,
+        type: 'user'
+    }))
+
+    const customSuggestions = customNames.map(name => ({
+        id: name,
+        username: name,
+        type: 'custom'
+    }))
+
+    // Combine and deduplicate if a custom name matches a username
+    const combined = [...userSuggestions]
+    customSuggestions.forEach(custom => {
+        if (!combined.some(u => u.username.toLowerCase() === custom.username.toLowerCase())) {
+            combined.push(custom as any)
+        }
+    })
+
+    return combined
 }
 
 export async function shareTask(taskId: string, username: string) {
@@ -306,13 +387,13 @@ export async function getSharedTasks() {
             OR: [
                 { sharedWith: { some: { id: session.userId } } },
                 {
-                    category: { sharedWith: { some: { id: session.userId } } },
-                    NOT: { creatorId: session.userId } // Avoid showing own tasks in "Shared" if category is shared
+                    project: { sharedWith: { some: { id: session.userId } } },
+                    NOT: { creatorId: session.userId }
                 }
             ]
         },
         include: {
-            category: true,
+            project: true,
             subtasks: {
                 orderBy: { createdAt: 'asc' }
             },
@@ -331,16 +412,20 @@ export async function getSharedTasks() {
     })
 
     const importanceMap: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 }
+    const statusOrder: Record<string, number> = { 'BACKLOG': 4, 'TODO': 1, 'IN_PROGRESS': 0, 'REVIEW': 2, 'DONE': 3 }
+
     const sortReferenceDate = new Date()
     sortReferenceDate.setHours(0, 0, 0, 0)
     const nextWeek = new Date(sortReferenceDate)
     nextWeek.setDate(sortReferenceDate.getDate() + 7)
 
     const sortedTasks = tasks.sort((a, b) => {
-        // 1. Sort by completed status first
-        if (a.completed !== b.completed) return a.completed ? 1 : -1
+        // 1. Sort by Status Priority
+        const sA = statusOrder[a.status] || 99
+        const sB = statusOrder[b.status] || 99
+        if (sA !== sB) return sA - sB
 
-        // Helper to get group: 1 = Next 7 Days, 2 = No Date, 3 = Future
+        // Helper to get group
         const getGroup = (t: typeof tasks[0]) => {
             if (!t.dueDate) return 2
             return new Date(t.dueDate) <= nextWeek ? 1 : 3
@@ -374,19 +459,18 @@ export async function getSharedTasks() {
     }
 }
 
-export async function deleteCompletedTasks(categoryId: string) {
+export async function deleteCompletedTasks(projectId: string) {
     const session = await getSession()
     if (!session?.userId) return { error: 'Unauthorized' }
 
     try {
-        if (categoryId === 'shared-virtual') {
-            // For virtual category, delete shared tasks completed
+        if (projectId === 'shared-virtual') {
             await prisma.task.deleteMany({
                 where: {
-                    completed: true,
+                    status: 'DONE',
                     OR: [
                         { sharedWith: { some: { id: session.userId } } },
-                        { category: { sharedWith: { some: { id: session.userId } } } }
+                        { project: { sharedWith: { some: { id: session.userId } } } }
                     ],
                     NOT: { creatorId: session.userId }
                 }
@@ -394,10 +478,8 @@ export async function deleteCompletedTasks(categoryId: string) {
         } else {
             await prisma.task.deleteMany({
                 where: {
-                    categoryId,
-                    completed: true,
-                    // Security: must be owner of category or task, or admin? 
-                    // For now, let's allow if user has access to category
+                    projectId,
+                    status: 'DONE',
                 }
             })
         }

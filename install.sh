@@ -4,8 +4,8 @@
 set -e
 
 # Configuration
-APP_DIR="/opt/todo-kines"
-REPO_URL="https://github.com/mikiligero/todo-kines.git"
+APP_DIR="/opt/todo-work"
+REPO_URL="https://github.com/mikiligero/todo-work.git"
 NODE_VERSION="20"
 
 # Colors
@@ -13,7 +13,7 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}Starting Todo Kines Installation...${NC}"
+echo -e "${BLUE}Starting Todo Work Installation...${NC}"
 
 # 1. System Updates & Dependencies
 echo -e "${BLUE}Updating system and installing dependencies...${NC}"
@@ -37,10 +37,10 @@ if [ -d "$APP_DIR" ]; then
     # BACKUP DATABASE & ENV
     if [ -f "prisma/dev.db" ]; then
         echo -e "${BLUE}Backing up database...${NC}"
-        cp prisma/dev.db /tmp/todo-kines-db.backup
+        cp prisma/dev.db /tmp/todo-work-db.backup
     fi
     if [ -f ".env" ]; then
-        cp .env /tmp/todo-kines-env.backup
+        cp .env /tmp/todo-work-env.backup
     fi
 
     # FORCE UPDATE
@@ -49,19 +49,19 @@ if [ -d "$APP_DIR" ]; then
     git reset --hard origin/main
     
     # RESTORE DATABASE
-    if [ -f "/tmp/todo-kines-db.backup" ]; then
+    if [ -f "/tmp/todo-work-db.backup" ]; then
         echo -e "${BLUE}Restoring database...${NC}"
         # Ensure dir exists
         mkdir -p prisma 
-        cp /tmp/todo-kines-db.backup prisma/dev.db
+        cp /tmp/todo-work-db.backup prisma/dev.db
     fi
      # RESTORE ENV if needed (usually reset --hard doesn't touch untracked files like .env, but good to be safe)
-    if [ ! -f ".env" ] && [ -f "/tmp/todo-kines-env.backup" ]; then
-        cp /tmp/todo-kines-env.backup .env
+    if [ ! -f ".env" ] && [ -f "/tmp/todo-work-env.backup" ]; then
+        cp /tmp/todo-work-env.backup .env
     fi
     
     # FIX DATABASE URL TO ABSOLUTE PATH (Fixes P2021 "Table not found" in standalone)
-    # If the URL is file:./dev.db or file:dev.db, change it to file:/opt/todo-kines/prisma/dev.db
+    # If the URL is file:./dev.db or file:dev.db, change it to file:/opt/todo-work/prisma/dev.db
     if [ -f ".env" ]; then
         # Use sed to replace relative paths with full absolute path
         sed -i 's|file:\./dev.db|file:'$APP_DIR'/prisma/dev.db|g' .env
@@ -121,9 +121,9 @@ cp -r .next/static .next/standalone/.next/static
 
 # 8. Setup Systemd Service
 echo -e "${BLUE}Configuring systemd service...${NC}"
-cat > /etc/systemd/system/todo-kines.service <<EOL
+cat > /etc/systemd/system/todo-work.service <<EOL
 [Unit]
-Description=Todo Kines Next.js App
+Description=Todo Work Next.js App
 After=network.target
 
 [Service]
@@ -141,8 +141,8 @@ WantedBy=multi-user.target
 EOL
 
 systemctl daemon-reload
-systemctl enable todo-kines
-systemctl restart todo-kines
+systemctl enable todo-work
+systemctl restart todo-work
 
 echo -e "${GREEN}Installation Complete!${NC}"
 echo -e "App is running on port 3000"

@@ -1,15 +1,14 @@
 import { getSession } from '@/lib/auth-utils'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { getCategories } from '@/app/actions/categories'
-import { getPendingTasks } from '@/app/actions/tasks'
-import { getUsersForSharing } from '@/app/actions/users'
+import { getProjects } from '@/app/actions/projects'
+import { getActiveTasks, getSuggestedAssignees } from '@/app/actions/tasks'
 import { TaskItem } from '@/components/TaskItem'
 import { ActionFab } from '@/components/ActionFab'
 import prisma from '@/lib/prisma'
 import { Sidebar } from '@/components/Sidebar'
-import { Settings, Shield } from 'lucide-react'
-import { CategoryCard } from '@/components/CategoryCard'
+import { Settings } from 'lucide-react'
+import { ProjectCard } from '@/components/ProjectCard'
 import { AutoRefresh } from '@/components/AutoRefresh'
 
 
@@ -21,18 +20,20 @@ export default async function Home() {
   const session = await getSession()
   if (!session?.userId) redirect('/login')
 
-  const [user, categories, tasks, allUsers] = await Promise.all([
+  const [user, projects, tasks, allUsers] = await Promise.all([
     getUser(session.userId),
-    getCategories(),
-    getPendingTasks(),
-    getUsersForSharing()
+    getProjects(),
+    getActiveTasks(),
+    getSuggestedAssignees()
   ])
 
-  if (!user) redirect('/login')
+  if (!user) {
+    redirect('/api/auth/signout')
+  }
 
   return (
     <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950">
-      <Sidebar user={user} categories={categories} allUsers={allUsers} />
+      <Sidebar user={user} projects={projects} allUsers={allUsers} />
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
@@ -41,7 +42,7 @@ export default async function Home() {
             <div>
               <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Good Morning, {user.username}!</h1>
               <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-                You have <span className="font-semibold text-indigo-600 dark:text-indigo-400">{tasks.length}</span> pending tasks today.
+                You have <span className="font-semibold text-indigo-600 dark:text-indigo-400">{tasks.length}</span> active tasks today.
               </p>
             </div>
 
@@ -63,31 +64,31 @@ export default async function Home() {
             {/* Left Panel: Pending Tasks */}
             <div className="lg:col-span-2 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Pending Tasks</h2>
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Active Tasks</h2>
                 {/* Filter controls could go here */}
               </div>
 
               <div className="space-y-3">
                 {tasks.length === 0 ? (
                   <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
-                    <p className="text-zinc-500">No pending tasks. Enjoy your day!</p>
+                    <p className="text-zinc-500">No active tasks. Enjoy your day!</p>
                   </div>
                 ) : (
                   tasks.map(task => (
-                    <TaskItem key={task.id} task={task} categories={categories} allUsers={allUsers} currentUserId={user.id} />
+                    <TaskItem key={task.id} task={task} projects={projects} allUsers={allUsers} currentUserId={user.id} />
                   ))
                 )}
               </div>
             </div>
 
-            {/* Right Panel: Categories Summary */}
+            {/* Right Panel: Projects Summary */}
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Overview</h2>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Projects</h2>
               <div className="grid grid-cols-2 gap-3">
-                {/* Virtual Shared Category */}
+                {/* Virtual Shared Project */}
                 {tasks.some(t => t.creatorId !== user.id) && (
-                  <CategoryCard
-                    cat={{
+                  <ProjectCard
+                    project={{
                       id: 'shared-virtual',
                       name: 'Shared with me',
                       color: '#6366f1', // Indigo-500
@@ -95,17 +96,17 @@ export default async function Home() {
                       _count: { tasks: tasks.filter(t => t.creatorId !== user.id).length },
                       tasks: tasks.filter(t => t.creatorId !== user.id)
                     } as any}
-                    allCategories={categories}
+                    allProjects={projects}
                     currentUserId={user.id}
                   />
                 )}
 
-                {categories.map(cat => (
-                  <CategoryCard key={cat.id} cat={cat} allCategories={categories} currentUserId={user.id} />
+                {projects.map(proj => (
+                  <ProjectCard key={proj.id} project={proj} allProjects={projects} currentUserId={user.id} />
                 ))}
-                {categories.length === 0 && (
+                {projects.length === 0 && (
                   <div className="col-span-2 text-sm text-zinc-500 text-center py-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                    No categories yet.
+                    No projects yet.
                   </div>
                 )}
               </div>
@@ -114,7 +115,7 @@ export default async function Home() {
         </div>
       </main>
 
-      <ActionFab categories={categories} />
+      <ActionFab projects={projects} allUsers={allUsers} />
       <AutoRefresh />
     </div>
   )

@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Todo Kines",
-  description: "Organization and tasks manager",
+  title: "Todo Work",
+  description: "IT Project Management and Task Tracking",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Todo Kines",
+    title: "Todo Work",
   },
   formatDetection: {
     telephone: false,

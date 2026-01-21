@@ -10,14 +10,14 @@ export async function exportData() {
     const user = await prisma.user.findUnique({ where: { id: session.userId } })
     if (!user?.isAdmin) return { error: 'Forbidden' }
 
-    const [users, categories, tasks] = await Promise.all([
+    const [users, projects, tasks] = await Promise.all([
         prisma.user.findMany({
             // Include password for restoration purposes
             select: {
                 id: true, username: true, password: true, isAdmin: true, createdAt: true
             }
         }),
-        prisma.category.findMany(),
+        prisma.project.findMany(),
         prisma.task.findMany({
             include: {
                 subtasks: true
@@ -26,10 +26,10 @@ export async function exportData() {
     ])
 
     return {
-        version: 1,
+        version: 2, // Bump version
         timestamp: new Date().toISOString(),
         users,
-        categories,
+        projects,
         tasks
     }
 }
@@ -45,9 +45,12 @@ export async function importData(jsonData: string) {
         const data = JSON.parse(jsonData)
 
         // Basic validation
-        if (!data.users || !data.categories || !data.tasks) {
+        if (!data.users || (!data.projects && !data.categories) || !data.tasks) {
             return { error: 'Invalid backup file format' }
         }
+
+        // Handle migration from categories -> projects if needed
+        const projectsData = data.projects || data.categories
 
         // We use a transaction to ensure integrity
         await prisma.$transaction(async (tx) => {
@@ -71,37 +74,46 @@ export async function importData(jsonData: string) {
                 })
             }
 
-            // 2. Restore Categories
-            for (const c of data.categories) {
-                await tx.category.upsert({
-                    where: { id: c.id },
+            // 2. Restore Projects (formerly Categories)
+            for (const p of projectsData) {
+                await tx.project.upsert({
+                    where: { id: p.id },
                     update: {
-                        name: c.name,
-                        color: c.color,
-                        ownerId: c.ownerId
+                        name: p.name,
+                        color: p.color,
+                        ownerId: p.ownerId
                     },
                     create: {
-                        id: c.id,
-                        name: c.name,
-                        color: c.color,
-                        ownerId: c.ownerId
+                        id: p.id,
+                        name: p.name,
+                        color: p.color,
+                        ownerId: p.ownerId
                     }
-                } as any) // Type cast to avoid strict relation requirements during build
+                })
             }
 
             // 3. Restore Tasks & Subtasks
             for (const t of data.tasks) {
                 const { subtasks, ...taskData } = t
 
+                // Migrate completed -> status if needed
+                let status = t.status
+                if (!status && t.completed !== undefined) {
+                    status = t.completed ? 'DONE' : 'TODO'
+                }
+
+                // Migrate categoryId -> projectId
+                const projectId = t.projectId || t.categoryId
+
                 await tx.task.upsert({
                     where: { id: t.id },
                     update: {
                         title: t.title,
                         description: t.description,
-                        completed: t.completed,
+                        status: status || 'TODO',
                         importance: t.importance,
                         dueDate: t.dueDate ? new Date(t.dueDate) : null,
-                        categoryId: t.categoryId,
+                        projectId: projectId,
                         creatorId: t.creatorId,
                         assigneeId: t.assigneeId,
                         isRecurring: t.isRecurring,
@@ -116,10 +128,10 @@ export async function importData(jsonData: string) {
                         id: t.id,
                         title: t.title,
                         description: t.description,
-                        completed: t.completed,
+                        status: status || 'TODO',
                         importance: t.importance,
                         dueDate: t.dueDate ? new Date(t.dueDate) : null,
-                        categoryId: t.categoryId,
+                        projectId: projectId,
                         creatorId: t.creatorId,
                         assigneeId: t.assigneeId,
                         isRecurring: t.isRecurring,
@@ -130,7 +142,7 @@ export async function importData(jsonData: string) {
                         reminder: t.reminder ? new Date(t.reminder) : null,
                         createdAt: t.createdAt ? new Date(t.createdAt) : undefined
                     }
-                } as any)
+                })
 
                 if (subtasks && Array.isArray(subtasks)) {
                     for (const st of subtasks) {
@@ -146,7 +158,7 @@ export async function importData(jsonData: string) {
                                 completed: st.completed,
                                 taskId: t.id
                             }
-                        } as any)
+                        })
                     }
                 }
             }

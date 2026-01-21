@@ -26,16 +26,16 @@ export async function searchUsers(query: string) {
         take: 5
     })
 }
-export async function getUsersForSharing() {
+export async function getUsersForSharing(excludeSelf: boolean = true) {
     const session = await getSession()
     if (!session?.userId) return []
 
     return await prisma.user.findMany({
-        where: {
+        where: excludeSelf ? {
             id: {
                 not: session.userId // Exclude self
             }
-        },
+        } : {},
         select: {
             id: true,
             username: true

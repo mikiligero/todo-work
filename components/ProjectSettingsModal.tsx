@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { updateCategory, deleteCategory } from '@/app/actions/categories'
+import { updateProject, deleteProject } from '@/app/actions/projects'
 import { X, Trash2, Users, CheckCircle2 } from 'lucide-react'
 
-export function CategorySettingsModal({ category, onClose, allUsers }: { category: any, onClose: () => void, allUsers?: any[] }) {
+export function ProjectSettingsModal({ project, onClose, allUsers }: { project: any, onClose: () => void, allUsers?: any[] }) {
     const [loading, setLoading] = useState(false)
-    const [sharedWith, setSharedWith] = useState<any[]>(category.sharedWith || [])
+    const [sharedWith, setSharedWith] = useState<any[]>(project.sharedWith || [])
 
     function toggleUser(user: any) {
         if (sharedWith.find(u => u.id === user.id)) {
@@ -22,15 +22,15 @@ export function CategorySettingsModal({ category, onClose, allUsers }: { categor
         const formData = new FormData(e.currentTarget)
         formData.append('sharedWithIds', JSON.stringify(sharedWith.map(u => u.id)))
 
-        await updateCategory(category.id, formData)
-        setLoading(true) // Keep loading true during refresh if possible, though next will handle it
+        await updateProject(project.id, formData)
+        setLoading(true)
         onClose()
     }
 
     async function handleDelete() {
-        if (confirm('Are you sure you want to delete this category? Tasks will be deleted.')) {
+        if (confirm('Are you sure you want to delete this project? Tasks will be deleted.')) {
             setLoading(true)
-            await deleteCategory(category.id)
+            await deleteProject(project.id)
             setLoading(false)
             onClose()
         }
@@ -41,9 +41,9 @@ export function CategorySettingsModal({ category, onClose, allUsers }: { categor
             <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md shadow-2xl p-0 overflow-hidden relative animate-in zoom-in-95 duration-200">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Edit Category</h2>
+                        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Edit Project</h2>
                         <div className="flex gap-2">
-                            <button onClick={handleDelete} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors" title="Delete Category">
+                            <button onClick={handleDelete} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors" title="Delete Project">
                                 <Trash2 size={18} />
                             </button>
                             <button onClick={onClose} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-600 dark:text-zinc-400 transition-colors">
@@ -55,10 +55,10 @@ export function CategorySettingsModal({ category, onClose, allUsers }: { categor
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 gap-4">
                             <div>
-                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">Category Name</label>
+                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">Project Name</label>
                                 <input
                                     name="name"
-                                    defaultValue={category.name}
+                                    defaultValue={project.name}
                                     required
                                     className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                                 />
@@ -69,10 +69,10 @@ export function CategorySettingsModal({ category, onClose, allUsers }: { categor
                                     <input
                                         name="color"
                                         type="color"
-                                        defaultValue={category.color}
+                                        defaultValue={project.color}
                                         className="h-8 w-12 p-0 border-0 rounded cursor-pointer bg-transparent"
                                     />
-                                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400 uppercase">{category.color}</span>
+                                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400 uppercase">{project.color}</span>
                                 </div>
                             </div>
                         </div>
@@ -81,7 +81,7 @@ export function CategorySettingsModal({ category, onClose, allUsers }: { categor
                             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                                 <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <Users size={14} className="text-indigo-500" />
-                                    Compartir Categoría
+                                    Share Project
                                 </h3>
 
                                 <div className="flex flex-wrap gap-2">
@@ -116,14 +116,14 @@ export function CategorySettingsModal({ category, onClose, allUsers }: { categor
                                 onClick={onClose}
                                 className="px-5 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                             >
-                                Cancelar
+                                Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
                                 className="px-6 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all"
                             >
-                                {loading ? 'Guardando...' : 'Guardar Cambios'}
+                                {loading ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </form>

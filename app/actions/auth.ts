@@ -11,8 +11,10 @@ export async function checkAnyUserExists() {
 }
 
 export async function createFirstUser(formData: FormData) {
+    console.log('--- createFirstUser start ---')
     const count = await prisma.user.count()
     if (count > 0) {
+        console.log('Admin already exists')
         return { error: 'Admin user already exists' }
     }
 
@@ -23,9 +25,11 @@ export async function createFirstUser(formData: FormData) {
         return { error: 'Username and password are required' }
     }
 
+    console.log('Hashing password...')
     const hashedPassword = await hashPassword(password)
 
     try {
+        console.log('Creating user in DB...')
         const user = await prisma.user.create({
             data: {
                 username,
@@ -33,11 +37,16 @@ export async function createFirstUser(formData: FormData) {
                 isAdmin: true,
             },
         })
+        console.log('User created:', user.id)
+        console.log('Creating session...')
         await createSession(user.id)
+        console.log('Session created')
     } catch (e) {
+        console.error('Error creating user:', e)
         return { error: 'Failed to create user' }
     }
 
+    console.log('Redirecting to / ...')
     redirect('/')
 }
 
