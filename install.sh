@@ -143,11 +143,6 @@ WantedBy=multi-user.target
 EOL
 
 systemctl daemon-reload
-if systemctl is-active --quiet todo-kines; then
-    echo -e "${BLUE}Stopping legacy todo-kines service...${NC}"
-    systemctl stop todo-kines
-    systemctl disable todo-kines
-fi
 systemctl enable todo-work
 systemctl restart todo-work
 
