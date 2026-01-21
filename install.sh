@@ -133,7 +133,7 @@ WorkingDirectory=${APP_DIR}
 ExecStart=/usr/bin/node .next/standalone/server.js
 Restart=always
 Environment=NODE_ENV=production
-Environment=PORT=3000
+Environment=PORT=3001
 Environment=HOSTNAME=0.0.0.0
 
 [Install]
@@ -145,4 +145,4 @@ systemctl enable todo-work
 systemctl restart todo-work
 
 echo -e "${GREEN}Installation Complete!${NC}"
-echo -e "App is running on port 3000"
+echo -e "App is running on port 3001"
