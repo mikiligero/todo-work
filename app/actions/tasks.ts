@@ -273,6 +273,38 @@ export async function getProjectTags(projectId: string) {
     })
 }
 
+export async function updateTag(id: string, name: string, color: string) {
+    const session = await getSession()
+    if (!session?.userId) return { error: 'No autorizado' }
+
+    try {
+        await prisma.tag.update({
+            where: { id },
+            data: { name, color }
+        })
+        revalidatePath('/')
+        return { success: true }
+    } catch (e) {
+        return { error: 'Error al actualizar la etiqueta' }
+    }
+}
+
+export async function deleteTag(id: string) {
+    const session = await getSession()
+    if (!session?.userId) return { error: 'No autorizado' }
+
+    try {
+        await prisma.tag.delete({
+            where: { id }
+        })
+        revalidatePath('/')
+        return { success: true }
+    } catch (e) {
+        return { error: 'Error al eliminar la etiqueta' }
+    }
+}
+
+
 export async function updateTask(id: string, formData: FormData) {
     const session = await getSession()
     if (!session?.userId) return { error: 'No autorizado' }

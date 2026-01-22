@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { updateProject, deleteProject } from '@/app/actions/projects'
-import { X, Trash2, Users, CheckCircle2 } from 'lucide-react'
+import { updateTag, deleteTag } from '@/app/actions/tasks'
+import { X, Trash2, Users, CheckCircle2, Tag as TagIcon, Save, Edit3 } from 'lucide-react'
 
 export function ProjectSettingsModal({ project, onClose, allUsers }: { project: any, onClose: () => void, allUsers?: any[] }) {
     const [loading, setLoading] = useState(false)
@@ -77,6 +78,24 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
                             </div>
                         </div>
 
+                        {/* Tag Management */}
+                        <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                            <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <TagIcon size={14} className="text-indigo-500" />
+                                Gestionar Etiquetas
+                            </h3>
+
+                            <div className="space-y-3">
+                                {project.tags && project.tags.length > 0 ? (
+                                    project.tags.map((tag: any) => (
+                                        <TagRow key={tag.id} tag={tag} />
+                                    ))
+                                ) : (
+                                    <div className="text-sm text-zinc-500 italic ml-1">No hay etiquetas en este proyecto.</div>
+                                )}
+                            </div>
+                        </div>
+
                         {allUsers && allUsers.length > 0 && (
                             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                                 <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -129,6 +148,69 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
                     </form>
                 </div>
             </div>
+        </div>
+    )
+}
+
+function TagRow({ tag }: { tag: any }) {
+    const [isEditing, setIsEditing] = useState(false)
+    const [name, setName] = useState(tag.name)
+    const [color, setColor] = useState(tag.color)
+    const [loading, setLoading] = useState(false)
+
+    async function handleUpdate() {
+        setLoading(true)
+        await updateTag(tag.id, name, color)
+        setLoading(false)
+        setIsEditing(false)
+    }
+
+    async function handleDelete() {
+        if (confirm(`¿Borrar etiqueta "${tag.name}"? Se quitará de todas las tareas.`)) {
+            setLoading(true)
+            await deleteTag(tag.id)
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="flex items-center gap-2 group">
+            {isEditing ? (
+                <div className="flex-1 flex gap-2 items-center bg-zinc-50 dark:bg-zinc-800 p-1 rounded-lg">
+                    <input
+                        type="color"
+                        value={color}
+                        onChange={e => setColor(e.target.value)}
+                        className="w-6 h-6 rounded border-0 bg-transparent p-0"
+                    />
+                    <input
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        className="flex-1 bg-transparent text-sm font-medium focus:outline-none"
+                    />
+                    <button onClick={handleUpdate} disabled={loading} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                        <Save size={14} />
+                    </button>
+                    <button onClick={() => setIsEditing(false)} className="p-1 text-zinc-400 hover:bg-zinc-100 rounded">
+                        <X size={14} />
+                    </button>
+                </div>
+            ) : (
+                <>
+                    <div className="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-colors">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }}></div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{tag.name}</span>
+                    </div>
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setIsEditing(true)} className="p-1.5 text-zinc-400 hover:text-indigo-600 rounded-lg">
+                            <Edit3 size={14} />
+                        </button>
+                        <button onClick={handleDelete} className="p-1.5 text-zinc-400 hover:text-red-500 rounded-lg">
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
