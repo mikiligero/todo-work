@@ -21,7 +21,9 @@ export async function getActiveTasks() {
             status: { not: 'DONE' },
         },
         include: {
-            project: true,
+            project: {
+                include: { columns: { orderBy: { order: 'asc' } } }
+            },
             subtasks: {
                 orderBy: { createdAt: 'asc' }
             },
@@ -41,7 +43,16 @@ export async function getActiveTasks() {
                     id: true,
                     username: true
                 }
-            }
+            },
+            logs: {
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    user: {
+                        select: { username: true }
+                    }
+                }
+            },
+            tags: true
         },
         orderBy: {
             dueDate: 'asc'
@@ -89,7 +100,7 @@ export async function getActiveTasks() {
 
 export async function createTask(formData: FormData) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     const title = formData.get('title') as string
     const projectId = formData.get('projectId') as string
@@ -97,7 +108,7 @@ export async function createTask(formData: FormData) {
     const status = formData.get('status') as string
     const dueDateStr = formData.get('dueDate') as string
 
-    if (!title || !projectId || projectId === "") return { error: 'Project is required' }
+    if (!title || !projectId || projectId === "") return { error: 'El proyecto es obligatorio' }
 
     try {
         let finalColumnId = formData.get('columnId') as string || null
@@ -137,13 +148,13 @@ export async function createTask(formData: FormData) {
         return { success: true }
     } catch (e) {
         console.error(e)
-        return { error: 'Failed to create task' }
+        return { error: 'Error al crear la tarea' }
     }
 }
 
 export async function updateTaskStatus(id: string, statusOrColumnId: string) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     try {
         // If it looks like a column ID (UUID), treat as column move
@@ -161,7 +172,7 @@ export async function updateTaskStatus(id: string, statusOrColumnId: string) {
         // Checks for legacy string status (BACKLOG, etc.)
         const status = statusOrColumnId
         const validStatuses = ['BACKLOG', 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']
-        if (!validStatuses.includes(status)) return { error: 'Invalid status' }
+        if (!validStatuses.includes(status)) return { error: 'Estado no válido' }
 
         if (status === 'DONE') {
             const task = await prisma.task.findUnique({ where: { id } })
@@ -227,13 +238,44 @@ export async function updateTaskStatus(id: string, statusOrColumnId: string) {
 
     } catch (e) {
         console.error(e)
-        return { error: 'Failed to update task status' }
+        return { error: 'Error al actualizar el estado de la tarea' }
     }
+}
+
+export async function createTag(projectId: string, name: string, color: string) {
+    const session = await getSession()
+    if (!session?.userId) return { error: 'No autorizado' }
+
+    if (!name || !color) return { error: 'Nombre y color son obligatorios' }
+
+    try {
+        const tag = await prisma.tag.create({
+            data: {
+                name,
+                color,
+                projectId
+            }
+        })
+        revalidatePath('/')
+        return { success: true, tag }
+    } catch (e) {
+        return { error: 'Error al crear la etiqueta' }
+    }
+}
+
+export async function getProjectTags(projectId: string) {
+    const session = await getSession()
+    if (!session?.userId) return []
+
+    return await prisma.tag.findMany({
+        where: { projectId },
+        orderBy: { name: 'asc' }
+    })
 }
 
 export async function updateTask(id: string, formData: FormData) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     const title = formData.get('title') as string
     const projectId = formData.get('projectId') as string
@@ -241,39 +283,61 @@ export async function updateTask(id: string, formData: FormData) {
     const status = formData.get('status') as string
     const dueDateStr = formData.get('dueDate') as string
 
-    if (!title || !projectId) return { error: 'Title and Project are required' }
+    // Handle Tags
+    const tagsJson = formData.get('tags') as string
+    let tagConnect = []
+    let tagDisconnect = []
+
+    if (tagsJson) {
+        try {
+            const tagIds = JSON.parse(tagsJson) as string[]
+            // We need to set the tags, so we can use set, but prisma set replaces all.
+            // Or we can just use set: tagIds.map(...)
+            tagConnect = tagIds.map(tid => ({ id: tid }))
+        } catch (e) { }
+    }
+
+    if (!title || !projectId) return { error: 'El título y el proyecto son obligatorios' }
 
     try {
+        const data: any = {
+            title,
+            projectId,
+            description: formData.get('description') as string,
+            importance: importance || 'Medium',
+            status: status || 'TODO',
+            columnId: formData.get('columnId') as string || null,
+            dueDate: dueDateStr ? new Date(dueDateStr) : null,
+            isRecurring: formData.get('isRecurring') === 'on',
+            recurrenceInterval: formData.get('recurrenceInterval') as string,
+            recurrenceWeekDays: formData.get('recurrenceWeekDays') as string,
+            recurrenceDayOfMonth: formData.get('recurrenceDayOfMonth') ? parseInt(formData.get('recurrenceDayOfMonth') as string) : null,
+            recurrenceEndDate: formData.get('recurrenceEndDate') ? new Date(formData.get('recurrenceEndDate') as string) : null,
+            assigneeId: formData.get('assigneeId') as string || null,
+            assigneeName: formData.get('assigneeName') as string || null,
+        }
+
+        if (tagsJson) {
+            data.tags = {
+                set: tagConnect
+            }
+        }
+
         await prisma.task.update({
             where: { id },
-            data: {
-                title,
-                projectId,
-                description: formData.get('description') as string,
-                importance: importance || 'Medium',
-                status: status || 'TODO',
-                columnId: formData.get('columnId') as string || null,
-                dueDate: dueDateStr ? new Date(dueDateStr) : null,
-                isRecurring: formData.get('isRecurring') === 'on',
-                recurrenceInterval: formData.get('recurrenceInterval') as string,
-                recurrenceWeekDays: formData.get('recurrenceWeekDays') as string,
-                recurrenceDayOfMonth: formData.get('recurrenceDayOfMonth') ? parseInt(formData.get('recurrenceDayOfMonth') as string) : null,
-                recurrenceEndDate: formData.get('recurrenceEndDate') ? new Date(formData.get('recurrenceEndDate') as string) : null,
-                assigneeId: formData.get('assigneeId') as string || null,
-                assigneeName: formData.get('assigneeName') as string || null,
-            }
+            data
         })
         revalidatePath('/')
         return { success: true }
     } catch (e) {
         console.error(e)
-        return { error: 'Failed to update task' }
+        return { error: 'Error al actualizar la tarea' }
     }
 }
 
 export async function deleteTask(id: string) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     try {
         await prisma.task.delete({
@@ -282,7 +346,7 @@ export async function deleteTask(id: string) {
         revalidatePath('/')
         return { success: true }
     } catch (e) {
-        return { error: 'Failed to delete task' }
+        return { error: 'Error al eliminar la tarea' }
     }
 }
 
@@ -334,14 +398,14 @@ export async function getSuggestedAssignees() {
 
 export async function shareTask(taskId: string, username: string) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     try {
         const userToShare = await prisma.user.findUnique({
             where: { username }
         })
 
-        if (!userToShare) return { error: 'User not found' }
+        if (!userToShare) return { error: 'Usuario no encontrado' }
 
         await prisma.task.update({
             where: { id: taskId },
@@ -354,13 +418,13 @@ export async function shareTask(taskId: string, username: string) {
         revalidatePath('/', 'layout')
         return { success: true }
     } catch (e) {
-        return { error: 'Failed to share task' }
+        return { error: 'Error al compartir la tarea' }
     }
 }
 
 export async function unshareTask(taskId: string, userIdToUnshare: string) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     try {
         await prisma.task.update({
@@ -374,7 +438,7 @@ export async function unshareTask(taskId: string, userIdToUnshare: string) {
         revalidatePath('/', 'layout')
         return { success: true }
     } catch (e) {
-        return { error: 'Failed to unshare task' }
+        return { error: 'Error al dejar de compartir la tarea' }
     }
 }
 
@@ -393,7 +457,9 @@ export async function getSharedTasks() {
             ]
         },
         include: {
-            project: true,
+            project: {
+                include: { columns: { orderBy: { order: 'asc' } } }
+            },
             subtasks: {
                 orderBy: { createdAt: 'asc' }
             },
@@ -451,7 +517,7 @@ export async function getSharedTasks() {
 
     return {
         id: 'shared-virtual',
-        name: 'Shared with me',
+        name: 'Compartidos conmigo',
         color: '#6366f1',
         ownerId: 'system',
         tasks: sortedTasks,
@@ -461,7 +527,7 @@ export async function getSharedTasks() {
 
 export async function deleteCompletedTasks(projectId: string) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     try {
         if (projectId === 'shared-virtual') {
@@ -487,6 +553,6 @@ export async function deleteCompletedTasks(projectId: string) {
         return { success: true }
     } catch (e) {
         console.error(e)
-        return { error: 'Failed to delete completed tasks' }
+        return { error: 'Error al eliminar las tareas completadas' }
     }
 }

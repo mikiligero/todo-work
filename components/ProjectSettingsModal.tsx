@@ -28,7 +28,7 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
     }
 
     async function handleDelete() {
-        if (confirm('Are you sure you want to delete this project? Tasks will be deleted.')) {
+        if (confirm('¿Estás seguro de que quieres eliminar este proyecto? Se borrarán todas las tareas.')) {
             setLoading(true)
             await deleteProject(project.id)
             setLoading(false)
@@ -41,9 +41,9 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
             <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md shadow-2xl p-0 overflow-hidden relative animate-in zoom-in-95 duration-200">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Edit Project</h2>
+                        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Editar Proyecto</h2>
                         <div className="flex gap-2">
-                            <button onClick={handleDelete} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors" title="Delete Project">
+                            <button onClick={handleDelete} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors" title="Eliminar Proyecto">
                                 <Trash2 size={18} />
                             </button>
                             <button onClick={onClose} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-600 dark:text-zinc-400 transition-colors">
@@ -55,7 +55,7 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 gap-4">
                             <div>
-                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">Project Name</label>
+                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">Nombre del Proyecto</label>
                                 <input
                                     name="name"
                                     defaultValue={project.name}
@@ -64,7 +64,7 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">Color Theme</label>
+                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 ml-1">Tema de Color</label>
                                 <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-2">
                                     <input
                                         name="color"
@@ -81,7 +81,7 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
                             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
                                 <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <Users size={14} className="text-indigo-500" />
-                                    Share Project
+                                    Compartir Proyecto
                                 </h3>
 
                                 <div className="flex flex-wrap gap-2">
@@ -116,14 +116,14 @@ export function ProjectSettingsModal({ project, onClose, allUsers }: { project: 
                                 onClick={onClose}
                                 className="px-5 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                             >
-                                Cancel
+                                Cancelar
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
                                 className="px-6 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all"
                             >
-                                {loading ? 'Saving...' : 'Save Changes'}
+                                {loading ? 'Guardando...' : 'Guardar Cambios'}
                             </button>
                         </div>
                     </form>

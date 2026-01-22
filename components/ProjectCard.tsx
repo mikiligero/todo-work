@@ -28,7 +28,7 @@ export function ProjectCard({ project, allProjects, currentUserId }: { project: 
                             setShowModal(true)
                         }}
                         className="opacity-0 group-hover:opacity-100 p-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all"
-                        title={`Add task to ${project.name}`}
+                        title={`Añadir tarea a ${project.name}`}
                     >
                         <Plus size={16} />
                     </button>
@@ -40,18 +40,18 @@ export function ProjectCard({ project, allProjects, currentUserId }: { project: 
                 {isSharedByOthers && (
                     <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1 mt-0.5">
                         <Users size={10} />
-                        Pr. by @{project.owner.username}
+                        Prop. de @{project.owner.username}
                     </div>
                 )}
 
                 {isOwner && isSharedWithOthers && (
                     <div className="text-[10px] text-emerald-500 truncate flex items-center gap-1 mt-0.5">
                         <Users size={10} />
-                        Shared {project.sharedWith.map((u: any) => `@${u.username}`).join(', ')}
+                        Compartido {project.sharedWith.map((u: any) => `@${u.username}`).join(', ')}
                     </div>
                 )}
 
-                <div className="text-xs text-zinc-500 mt-1">{project._count?.tasks ?? 0} active</div>
+                <div className="text-xs text-zinc-500 mt-1">{project._count?.tasks ?? 0} activas</div>
             </div>
 
             {showModal && (

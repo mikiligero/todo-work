@@ -37,11 +37,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             <Sidebar user={user} projects={allProjects} allUsers={allUsers} />
 
             <main className="flex-1 overflow-auto">
-                <div className="max-w-5xl mx-auto p-4 md:p-8 pb-32">
+                <div className="w-full h-full p-2 flex flex-col">
                     <header className="mb-8">
                         <Link href="/" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-indigo-600 mb-4 transition-colors">
                             <ChevronLeft size={16} />
-                            Back to Dashboard
+                            Volver al Panel
                         </Link>
 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -58,22 +58,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                             {proj.owner && proj.ownerId !== 'system' && proj.ownerId !== user.id && (
                                 <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-900/30 w-fit">
                                     <Users size={14} />
-                                    Shared by @{proj.owner.username}
+                                    Compartido por @{proj.owner.username}
                                 </div>
                             )}
                             {proj.ownerId === user.id && proj.sharedWith && proj.sharedWith.length > 0 && (
                                 <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 w-fit">
                                     <Users size={14} />
-                                    Shared with {proj.sharedWith.map((u: any) => `@${u.username}`).join(', ')}
+                                    Compartido con {proj.sharedWith.map((u: any) => `@${u.username}`).join(', ')}
                                 </div>
                             )}
                         </div>
                         <p className="text-zinc-500 dark:text-zinc-400 mt-2">
-                            {activeTasks.length} active tasks · {completedTasks.length} completed
+                            {activeTasks.length} tareas activas · {completedTasks.length} completadas
                         </p>
                     </header>
 
-                    <div className="h-full">
+                    <div className="flex-1 min-h-0">
                         {/* Kanban Board */}
                         <KanbanBoard
                             tasks={proj.tasks}
@@ -87,7 +87,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
                         {/* Clear Completed Button - positioned below or optionally we can move it to header */}
                         {completedTasks.length > 0 && (
-                            <div className="mt-4 flex justify-end">
+                            <div className="mt-2 flex justify-end">
                                 <ClearCompletedButton projectId={proj.id} />
                             </div>
                         )}

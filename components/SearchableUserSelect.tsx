@@ -63,8 +63,8 @@ export function SearchableUserSelect({ users, initialUserId, initialUserName, na
     }
 
     const displayText = selectedUserId
-        ? users.find(u => u.id === selectedUserId)?.username || 'User'
-        : selectedUserName || 'Unassigned'
+        ? users.find(u => u.id === selectedUserId)?.username || 'Usuario'
+        : selectedUserName || 'Sin asignar'
 
     return (
         <div className="relative" ref={containerRef}>
@@ -96,7 +96,7 @@ export function SearchableUserSelect({ users, initialUserId, initialUserName, na
                                         handleSelectFreeText()
                                     }
                                 }}
-                                placeholder="Search or type a name..."
+                                placeholder="Buscar o escribir nombre..."
                                 className="bg-transparent border-none focus:outline-none text-sm w-full text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
                             />
                         </div>
@@ -106,7 +106,7 @@ export function SearchableUserSelect({ users, initialUserId, initialUserName, na
                             onClick={() => { setSelectedUserId(''); setSelectedUserName(''); setIsOpen(false); setSearchTerm(''); }}
                             className={`px-3 py-2 rounded-md text-sm cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors ${!selectedUserId && !selectedUserName ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-zinc-600 dark:text-zinc-400'}`}
                         >
-                            Unassigned
+                            Sin asignar
                         </div>
 
                         {searchTerm && !users.some(u => u.username.toLowerCase() === searchTerm.toLowerCase()) && (
@@ -115,7 +115,7 @@ export function SearchableUserSelect({ users, initialUserId, initialUserName, na
                                 className="px-3 py-2 rounded-md text-sm cursor-pointer text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center gap-2"
                             >
                                 <Plus size={14} />
-                                <span>Use "{searchTerm}"</span>
+                                <span>Usar "{searchTerm}"</span>
                             </div>
                         )}
 

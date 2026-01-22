@@ -45,19 +45,19 @@ export default function LoginPage() {
                         <img src="/icon.png" alt="Logo" className="w-16 h-16 rounded-xl" />
                     </div>
                     <h1 className="text-3xl font-bold text-zinc-900 dark:text-white text-center tracking-tight">
-                        {isSetupMode ? 'Welcome to Todo Kines' : 'Todo Kines'}
+                        {isSetupMode ? 'Bienvenido a Todo Kines' : 'Todo Kines'}
                     </h1>
                     <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 text-center">
                         {isSetupMode
-                            ? 'Create your admin account to get started'
-                            : 'Sign in to access your organization tasks'}
+                            ? 'Crea tu cuenta de administrador para empezar'
+                            : 'Inicia sesión para acceder a las tareas de tu organización'}
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                            Username
+                            Nombre de usuario
                         </label>
                         <input
                             name="username"
@@ -65,12 +65,12 @@ export default function LoginPage() {
                             required
                             autoComplete="username"
                             className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
-                            placeholder="Enter your username"
+                            placeholder="Introduce tu nombre de usuario"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                            Password
+                            Contraseña
                         </label>
                         <input
                             name="password"
@@ -99,7 +99,7 @@ export default function LoginPage() {
                         {isPending ? (
                             <Loader2 className="animate-spin" size={20} />
                         ) : (
-                            isSetupMode ? 'Create Admin Account' : 'Sign In'
+                            isSetupMode ? 'Crear Cuenta Administrador' : 'Entrar'
                         )}
                     </button>
                 </form>

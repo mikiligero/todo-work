@@ -23,7 +23,7 @@ export function ActionFab({ projects, allUsers }: { projects: any[], allUsers?: 
                             className="flex items-center gap-3 pr-2 group"
                         >
                             <span className="text-sm font-medium bg-white dark:bg-zinc-800 px-2 py-1 rounded shadow text-zinc-700 dark:text-zinc-200 group-hover:-translate-x-1 transition-transform">
-                                New Project
+                                Nuevo Proyecto
                             </span>
                             <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-full shadow-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <FolderPlus size={20} />
@@ -35,7 +35,7 @@ export function ActionFab({ projects, allUsers }: { projects: any[], allUsers?: 
                             className="flex items-center gap-3 pr-2 group"
                         >
                             <span className="text-sm font-medium bg-white dark:bg-zinc-800 px-2 py-1 rounded shadow text-zinc-700 dark:text-zinc-200 group-hover:-translate-x-1 transition-transform">
-                                New Task
+                                Nueva Tarea
                             </span>
                             <div className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-full shadow-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <List size={20} />
@@ -92,50 +92,50 @@ export function CreateTaskModal({ projects, allUsers, onClose, initialProjectId 
                     <X size={20} />
                 </button>
 
-                <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white">New Task</h2>
+                <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white">Nueva Tarea</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Title</label>
-                        <input name="title" required className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" placeholder="What needs to be done?" />
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Título</label>
+                        <input name="title" required className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" placeholder="¿Qué hay que hacer?" />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
-                        <textarea name="description" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 h-20 resize-none" placeholder="Add more details (optional)..." />
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Descripción</label>
+                        <textarea name="description" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 h-20 resize-none" placeholder="Añade más detalles (opcional)..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Project</label>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Proyecto</label>
                             <select
                                 name="projectId"
                                 defaultValue={initialProjectId || ""}
                                 required
                                 className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2"
                             >
-                                <option value="" disabled>Select Project...</option>
+                                <option value="" disabled>Selecciona Proyecto...</option>
                                 {projects.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Importance</label>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Importancia</label>
                             <select name="importance" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" defaultValue="Medium">
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
+                                <option value="Low">Baja</option>
+                                <option value="Medium">Media</option>
+                                <option value="High">Alta</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Due Date</label>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Fecha de vencimiento</label>
                         <input name="dueDate" type="date" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" />
                     </div>
 
                     {allUsers && (
                         <div>
-                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Assignee</label>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Asignado a</label>
                             <SearchableUserSelect users={allUsers} />
                         </div>
                     )}
@@ -143,8 +143,8 @@ export function CreateTaskModal({ projects, allUsers, onClose, initialProjectId 
                     <RecurrenceFields />
 
                     <div className="pt-2 flex justify-end gap-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-lg">Cancel</button>
-                        <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg">Create Task</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-lg">Cancelar</button>
+                        <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg">Crear Tarea</button>
                     </div>
                 </form>
             </div>
@@ -170,10 +170,10 @@ function CreateProjectModal({ onClose }: { onClose: () => void }) {
                 <button onClick={onClose} className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
                     <X size={20} />
                 </button>
-                <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white">New Project</h2>
+                <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white">Nuevo Proyecto</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name</label>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nombre</label>
                         <input name="name" required className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" placeholder="e.g. Website Redesign" />
                     </div>
                     <div>
@@ -181,8 +181,8 @@ function CreateProjectModal({ onClose }: { onClose: () => void }) {
                         <input name="color" type="color" defaultValue="#6366f1" className="w-full h-10 p-0 border-0 rounded-lg cursor-pointer" />
                     </div>
                     <div className="pt-2 flex justify-end gap-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-lg">Cancel</button>
-                        <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg">Create Project</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-lg">Cancelar</button>
+                        <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg">Crear Proyecto</button>
                     </div>
                 </form>
             </div>

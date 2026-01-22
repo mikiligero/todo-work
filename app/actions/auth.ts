@@ -15,14 +15,14 @@ export async function createFirstUser(formData: FormData) {
     const count = await prisma.user.count()
     if (count > 0) {
         console.log('Admin already exists')
-        return { error: 'Admin user already exists' }
+        return { error: 'El usuario administrador ya existe' }
     }
 
     const username = formData.get('username') as string
     const password = formData.get('password') as string
 
     if (!username || !password) {
-        return { error: 'Username and password are required' }
+        return { error: 'Se requiere nombre de usuario y contraseña' }
     }
 
     console.log('Hashing password...')
@@ -43,7 +43,7 @@ export async function createFirstUser(formData: FormData) {
         console.log('Session created')
     } catch (e) {
         console.error('Error creating user:', e)
-        return { error: 'Failed to create user' }
+        return { error: 'Error al crear el usuario' }
     }
 
     console.log('Redirecting to / ...')
@@ -55,7 +55,7 @@ export async function login(formData: FormData) {
     const password = formData.get('password') as string
 
     if (!username || !password) {
-        return { error: 'Username and password are required' }
+        return { error: 'Se requiere nombre de usuario y contraseña' }
     }
 
     const user = await prisma.user.findUnique({
@@ -63,7 +63,7 @@ export async function login(formData: FormData) {
     })
 
     if (!user || !(await verifyPassword(password, user.password))) {
-        return { error: 'Invalid username or password' }
+        return { error: 'Usuario o contraseña incorrectos' }
     }
 
     await createSession(user.id)

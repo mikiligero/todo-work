@@ -12,7 +12,7 @@ export function ProjectHeaderActions({ project, allUsers }: { project: any, allU
     const router = useRouter()
 
     async function handleDelete() {
-        if (confirm('Are you sure you want to delete this project? All associated tasks will be removed.')) {
+        if (confirm('¿Estás seguro de que quieres eliminar este proyecto? Se eliminarán todas las tareas asociadas.')) {
             setLoading(true)
             await deleteProject(project.id)
             setLoading(false)
@@ -26,19 +26,19 @@ export function ProjectHeaderActions({ project, allUsers }: { project: any, allU
                 <button
                     onClick={() => setShowSettings(true)}
                     className="p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm hover:border-indigo-500 text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 transition-all flex items-center gap-2 px-3"
-                    title="Edit Project"
+                    title="Editar Proyecto"
                 >
                     <Edit2 size={18} />
-                    <span className="text-sm font-medium hidden sm:inline">Edit</span>
+                    <span className="text-sm font-medium hidden sm:inline">Editar</span>
                 </button>
                 <button
                     onClick={handleDelete}
                     disabled={loading}
                     className="p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm hover:border-red-500 text-zinc-600 dark:text-zinc-400 hover:text-red-600 transition-all flex items-center gap-2 px-3 disabled:opacity-50"
-                    title="Delete Project"
+                    title="Eliminar Proyecto"
                 >
                     <Trash2 size={18} />
-                    <span className="text-sm font-medium hidden sm:inline">Delete</span>
+                    <span className="text-sm font-medium hidden sm:inline">Eliminar</span>
                 </button>
             </div>
 

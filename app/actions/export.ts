@@ -10,27 +10,33 @@ export async function exportData() {
     const user = await prisma.user.findUnique({ where: { id: session.userId } })
     if (!user?.isAdmin) return { error: 'Forbidden' }
 
-    const [users, projects, tasks] = await Promise.all([
+    const [users, projects, tasks, tags] = await Promise.all([
         prisma.user.findMany({
             // Include password for restoration purposes
             select: {
                 id: true, username: true, password: true, isAdmin: true, createdAt: true
             }
         }),
-        prisma.project.findMany(),
+        prisma.project.findMany({
+            include: { columns: true }
+        }),
         prisma.task.findMany({
             include: {
-                subtasks: true
+                subtasks: true,
+                tags: true,
+                logs: true
             }
-        })
+        }),
+        prisma.tag.findMany()
     ])
 
     return {
-        version: 2, // Bump version
+        version: 3, // Bump version
         timestamp: new Date().toISOString(),
         users,
         projects,
-        tasks
+        tasks,
+        tags
     }
 }
 
@@ -90,11 +96,49 @@ export async function importData(jsonData: string) {
                         ownerId: p.ownerId
                     }
                 })
+
+                if (p.columns && Array.isArray(p.columns)) {
+                    for (const col of p.columns) {
+                        await tx.kanbanColumn.upsert({
+                            where: { id: col.id },
+                            update: {
+                                title: col.title,
+                                order: col.order
+                            },
+                            create: {
+                                id: col.id,
+                                title: col.title,
+                                order: col.order,
+                                projectId: p.id
+                            }
+                        })
+                    }
+                }
+            }
+
+            // 2b. Restore Tags
+            if (data.tags) {
+                for (const tag of data.tags) {
+                    await tx.tag.upsert({
+                        where: { id: tag.id },
+                        update: {
+                            name: tag.name,
+                            color: tag.color,
+                            projectId: tag.projectId
+                        },
+                        create: {
+                            id: tag.id,
+                            name: tag.name,
+                            color: tag.color,
+                            projectId: tag.projectId
+                        }
+                    })
+                }
             }
 
             // 3. Restore Tasks & Subtasks
             for (const t of data.tasks) {
-                const { subtasks, ...taskData } = t
+                const { subtasks, tags, logs, ...taskData } = t
 
                 // Migrate completed -> status if needed
                 let status = t.status
@@ -105,42 +149,36 @@ export async function importData(jsonData: string) {
                 // Migrate categoryId -> projectId
                 const projectId = t.projectId || t.categoryId
 
+                const updateData: any = {
+                    title: t.title,
+                    description: t.description,
+                    status: status || 'TODO',
+                    importance: t.importance,
+                    dueDate: t.dueDate ? new Date(t.dueDate) : null,
+                    projectId: projectId,
+                    creatorId: t.creatorId,
+                    assigneeId: t.assigneeId,
+                    isRecurring: t.isRecurring,
+                    recurrenceInterval: t.recurrenceInterval,
+                    recurrenceWeekDays: t.recurrenceWeekDays,
+                    recurrenceDayOfMonth: t.recurrenceDayOfMonth,
+                    recurrenceEndDate: t.recurrenceEndDate ? new Date(t.recurrenceEndDate) : null,
+                    reminder: t.reminder ? new Date(t.reminder) : null,
+                    createdAt: t.createdAt ? new Date(t.createdAt) : undefined
+                }
+
+                if (tags && Array.isArray(tags)) {
+                    updateData.tags = {
+                        set: tags.map((tg: any) => ({ id: tg.id }))
+                    }
+                }
+
                 await tx.task.upsert({
                     where: { id: t.id },
-                    update: {
-                        title: t.title,
-                        description: t.description,
-                        status: status || 'TODO',
-                        importance: t.importance,
-                        dueDate: t.dueDate ? new Date(t.dueDate) : null,
-                        projectId: projectId,
-                        creatorId: t.creatorId,
-                        assigneeId: t.assigneeId,
-                        isRecurring: t.isRecurring,
-                        recurrenceInterval: t.recurrenceInterval,
-                        recurrenceWeekDays: t.recurrenceWeekDays,
-                        recurrenceDayOfMonth: t.recurrenceDayOfMonth,
-                        recurrenceEndDate: t.recurrenceEndDate ? new Date(t.recurrenceEndDate) : null,
-                        reminder: t.reminder ? new Date(t.reminder) : null,
-                        createdAt: t.createdAt ? new Date(t.createdAt) : undefined
-                    },
+                    update: updateData,
                     create: {
-                        id: t.id,
-                        title: t.title,
-                        description: t.description,
-                        status: status || 'TODO',
-                        importance: t.importance,
-                        dueDate: t.dueDate ? new Date(t.dueDate) : null,
-                        projectId: projectId,
-                        creatorId: t.creatorId,
-                        assigneeId: t.assigneeId,
-                        isRecurring: t.isRecurring,
-                        recurrenceInterval: t.recurrenceInterval,
-                        recurrenceWeekDays: t.recurrenceWeekDays,
-                        recurrenceDayOfMonth: t.recurrenceDayOfMonth,
-                        recurrenceEndDate: t.recurrenceEndDate ? new Date(t.recurrenceEndDate) : null,
-                        reminder: t.reminder ? new Date(t.reminder) : null,
-                        createdAt: t.createdAt ? new Date(t.createdAt) : undefined
+                        ...updateData,
+                        id: t.id
                     }
                 })
 
@@ -157,6 +195,25 @@ export async function importData(jsonData: string) {
                                 title: st.title,
                                 completed: st.completed,
                                 taskId: t.id
+                            }
+                        })
+                    }
+                }
+
+                if (logs && Array.isArray(logs)) {
+                    for (const log of logs) {
+                        await tx.taskLog.upsert({
+                            where: { id: log.id },
+                            update: {
+                                content: log.content,
+                                createdAt: new Date(log.createdAt)
+                            },
+                            create: {
+                                id: log.id,
+                                content: log.content,
+                                userId: log.userId,
+                                taskId: t.id,
+                                createdAt: new Date(log.createdAt)
                             }
                         })
                     }

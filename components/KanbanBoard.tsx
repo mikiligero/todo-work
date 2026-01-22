@@ -82,7 +82,7 @@ export function KanbanBoard({ tasks, columns, projects, allUsers, currentUserId,
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-250px)]">
+            <div className="flex gap-4 overflow-x-auto pb-4 h-full items-start">
                 {columns.map(col => (
                     <KanbanColumn
                         key={col.id}
@@ -98,14 +98,14 @@ export function KanbanBoard({ tasks, columns, projects, allUsers, currentUserId,
 
                 {/* Add Column Button */}
                 {isOwner && (
-                    <div className="min-w-[300px] w-[300px] flex-shrink-0">
+                    <div className="min-w-[320px] w-[320px] flex-shrink-0">
                         {isCreatingColumn ? (
                             <form onSubmit={handleCreateColumn} className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                                 <input
                                     autoFocus
                                     value={newColumnTitle}
                                     onChange={e => setNewColumnTitle(e.target.value)}
-                                    placeholder="Column name..."
+                                    placeholder="Nombre de la columna..."
                                     className="w-full text-sm bg-transparent border-b border-indigo-500 focus:outline-none mb-3 px-1 py-1"
                                 />
                                 <div className="flex justify-end gap-2">
@@ -114,14 +114,14 @@ export function KanbanBoard({ tasks, columns, projects, allUsers, currentUserId,
                                         onClick={() => setIsCreatingColumn(false)}
                                         className="text-xs text-zinc-500 hover:text-zinc-700"
                                     >
-                                        Cancel
+                                        Cancelar
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={!newColumnTitle.trim()}
                                         className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700"
                                     >
-                                        Add
+                                        Añadir
                                     </button>
                                 </div>
                             </form>
@@ -131,7 +131,7 @@ export function KanbanBoard({ tasks, columns, projects, allUsers, currentUserId,
                                 className="w-full h-12 flex items-center justify-center gap-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 transition-colors text-sm font-medium"
                             >
                                 <Plus size={16} />
-                                Add Column
+                                Añadir Columna
                             </button>
                         )}
                     </div>
@@ -176,7 +176,7 @@ function KanbanColumn({ col, tasks, projects, allUsers, currentUserId, projectId
     }
 
     async function handleDeleteColumn() {
-        if (confirm('Delete this column? Tasks will be moved to the backlog (or null column).')) {
+        if (confirm('¿Eliminar esta columna? Las tareas se moverán al backlog (o columna nula).')) {
             await deleteColumn(col.id)
         }
     }
@@ -207,9 +207,9 @@ function KanbanColumn({ col, tasks, projects, allUsers, currentUserId, projectId
     }
 
     return (
-        <div ref={setNodeRef} className="min-w-[300px] w-[300px] flex-shrink-0 flex flex-col bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 h-full max-h-full">
+        <div ref={setNodeRef} className="min-w-[320px] w-[320px] flex-shrink-0 flex flex-col bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 h-full max-h-full">
             {/* Column Header */}
-            <div className={`p-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-zinc-50 dark:bg-zinc-900 rounded-t-xl z-10`}>
+            <div className={`p-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-zinc-50 dark:bg-zinc-900 rounded-t-xl z-10`}>
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                     <div className={`w-2 h-2 rounded-full shrink-0 ${getHeaderColor(col.title)}`}></div>
                     {isEditing ? (
@@ -243,10 +243,10 @@ function KanbanColumn({ col, tasks, projects, allUsers, currentUserId, projectId
                             </button>
                             <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-20 overflow-hidden flex flex-col cursor-pointer">
                                 <div onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-pointer">
-                                    <Edit2 size={12} /> Rename
+                                    <Edit2 size={12} /> Renombrar
                                 </div>
                                 <div onClick={handleDeleteColumn} className="flex items-center gap-2 px-3 py-2 text-xs text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer">
-                                    <Trash2 size={12} /> Delete
+                                    <Trash2 size={12} /> Eliminar
                                 </div>
                             </div>
                         </div>
@@ -268,7 +268,7 @@ function KanbanColumn({ col, tasks, projects, allUsers, currentUserId, projectId
                             autoFocus
                             value={newTaskTitle}
                             onChange={e => setNewTaskTitle(e.target.value)}
-                            placeholder="What needs to be done?"
+                            placeholder="¿Qué hay que hacer?"
                             className="w-full text-sm bg-transparent resize-none focus:outline-none mb-2 placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-200"
                             rows={2}
                             onKeyDown={e => {
@@ -280,7 +280,7 @@ function KanbanColumn({ col, tasks, projects, allUsers, currentUserId, projectId
                         />
                         <div className="flex justify-end gap-2">
                             <button type="button" onClick={() => setIsAddingTask(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500"><X size={14} /></button>
-                            <button type="submit" className="px-2 py-1 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700">Add</button>
+                            <button type="submit" className="px-2 py-1 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700">Añadir</button>
                         </div>
                     </form>
                 </div>
@@ -308,7 +308,7 @@ function DroppableTaskList({ colId, tasks, projects, allUsers, currentUserId }: 
     return (
         <div
             ref={setNodeRef}
-            className={`p-2 flex-1 overflow-y-auto space-y-2 transition-colors custom-scrollbar ${isOver ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
+            className={`p-1.5 flex-1 overflow-y-auto space-y-2 transition-colors custom-scrollbar ${isOver ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
         >
             <SortableContext items={tasks.map((t: any) => t.id)} strategy={verticalListSortingStrategy}>
                 {tasks.map((task: any) => (

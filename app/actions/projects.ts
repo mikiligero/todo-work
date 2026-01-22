@@ -32,12 +32,12 @@ export async function getProjects() {
 
 export async function createProject(formData: FormData) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     const name = formData.get('name') as string
     const color = formData.get('color') as string
 
-    if (!name) return { error: 'Name is required' }
+    if (!name) return { error: 'El nombre es obligatorio' }
 
     try {
         await prisma.project.create({
@@ -50,13 +50,13 @@ export async function createProject(formData: FormData) {
         revalidatePath('/')
         return { success: true }
     } catch (e) {
-        return { error: 'Failed to create project' }
+        return { error: 'Error al crear el proyecto' }
     }
 }
 
 export async function updateProject(id: string, formData: FormData) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     const name = formData.get('name') as string
     const color = formData.get('color') as string
@@ -86,13 +86,13 @@ export async function updateProject(id: string, formData: FormData) {
         revalidatePath('/')
         return { success: true }
     } catch (e) {
-        return { error: 'Failed to update project' }
+        return { error: 'Error al actualizar el proyecto' }
     }
 }
 
 export async function deleteProject(id: string) {
     const session = await getSession()
-    if (!session?.userId) return { error: 'Unauthorized' }
+    if (!session?.userId) return { error: 'No autorizado' }
 
     try {
         // Only owner can delete
@@ -105,7 +105,7 @@ export async function deleteProject(id: string) {
         revalidatePath('/')
         return { success: true }
     } catch (e) {
-        return { error: 'Failed to delete project' }
+        return { error: 'Error al eliminar el proyecto' }
     }
 }
 
@@ -119,6 +119,7 @@ export async function getProjectWithTasks(id: string) {
         include: {
             owner: true,
             sharedWith: true,
+            tags: true,
             columns: {
                 orderBy: { order: 'asc' }
             },
@@ -128,6 +129,18 @@ export async function getProjectWithTasks(id: string) {
                     creator: true,
                     assignee: true,
                     sharedWith: true,
+                    tags: true,
+                    project: {
+                        include: { columns: { orderBy: { order: 'asc' } } }
+                    },
+                    logs: {
+                        orderBy: { createdAt: 'desc' },
+                        include: {
+                            user: {
+                                select: { username: true }
+                            }
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' }
             }
@@ -147,7 +160,7 @@ export async function getProjectWithTasks(id: string) {
 
     // 2. Lazy Seed Columns if none exist
     if (project.columns.length === 0) {
-        const defaultColumns = ['Backlog', 'To Do', 'In Progress', 'Review', 'Done']
+        const defaultColumns = ['Backlog', 'Por hacer', 'En curso', 'Revisión', 'Hecho']
         for (let i = 0; i < defaultColumns.length; i++) {
             await prisma.kanbanColumn.create({
                 data: {
@@ -172,6 +185,17 @@ export async function getProjectWithTasks(id: string) {
                         creator: true,
                         assignee: true,
                         sharedWith: true,
+                        project: {
+                            include: { columns: { orderBy: { order: 'asc' } } }
+                        },
+                        logs: {
+                            orderBy: { createdAt: 'desc' },
+                            include: {
+                                user: {
+                                    select: { username: true }
+                                }
+                            }
+                        }
                     },
                     orderBy: { createdAt: 'desc' }
                 }
@@ -211,6 +235,17 @@ export async function getProjectWithTasks(id: string) {
                         creator: true,
                         assignee: true,
                         sharedWith: true,
+                        project: {
+                            include: { columns: { orderBy: { order: 'asc' } } }
+                        },
+                        logs: {
+                            orderBy: { createdAt: 'desc' },
+                            include: {
+                                user: {
+                                    select: { username: true }
+                                }
+                            }
+                        }
                     },
                     orderBy: { createdAt: 'desc' }
                 }

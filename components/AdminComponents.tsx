@@ -20,7 +20,7 @@ export function AdminCreateUserForm() {
         if (result.error) {
             setMessage(result.error)
         } else {
-            setMessage('User created successfully')
+            setMessage('Usuario creado correctamente')
             e.currentTarget.reset()
         }
         setLoading(false)
@@ -29,22 +29,22 @@ export function AdminCreateUserForm() {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Username</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nombre de usuario</label>
                 <input name="username" required className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" />
             </div>
             <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Password</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Contraseña</label>
                 <input name="password" type="password" required className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" />
             </div>
 
             {message && (
-                <div className={`text-sm ${message.includes('success') ? 'text-green-600' : 'text-red-500'}`}>
+                <div className={`text-sm ${message.includes('corretamente') || message.includes('successfully') ? 'text-green-600' : 'text-red-500'}`}>
                     {message}
                 </div>
             )}
 
             <button disabled={loading} className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center justify-center">
-                {loading ? <Loader2 className="animate-spin" size={16} /> : 'Create User'}
+                {loading ? <Loader2 className="animate-spin" size={16} /> : 'Crear Usuario'}
             </button>
         </form>
     )
@@ -55,7 +55,7 @@ export function AdminUserList({ users }: { users: any[] }) {
     const [deletingId, setDeletingId] = useState<string | null>(null)
 
     async function handleDelete(id: string) {
-        if (!confirm('Are you sure? This action cannot be undone.')) return
+        if (!confirm('¿Estás seguro? Esta acción no se puede deshacer.')) return
         setDeletingId(id)
         await deleteUser(id)
         setDeletingId(null)
@@ -74,7 +74,7 @@ export function AdminUserList({ users }: { users: any[] }) {
                                 {u.username}
                                 {u.isAdmin && <ShieldBadge />}
                             </div>
-                            <div className="text-xs text-zinc-500">Created: {new Date(u.createdAt).toISOString().split('T')[0]}</div>
+                            <div className="text-xs text-zinc-500">Creado: {new Date(u.createdAt).toISOString().split('T')[0]}</div>
                         </div>
                     </div>
 
@@ -82,7 +82,7 @@ export function AdminUserList({ users }: { users: any[] }) {
                         <button
                             onClick={() => setEditingUser(u)}
                             className="p-1.5 text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                            title="Edit User"
+                            title="Editar Usuario"
                         >
                             <Edit2 size={16} />
                         </button>
@@ -90,7 +90,7 @@ export function AdminUserList({ users }: { users: any[] }) {
                             onClick={() => handleDelete(u.id)}
                             disabled={deletingId === u.id}
                             className="p-1.5 text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete User"
+                            title="Eliminar Usuario"
                         >
                             {deletingId === u.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                         </button>
@@ -124,27 +124,27 @@ function EditUserModal({ user, onClose }: { user: any, onClose: () => void }) {
                     <X size={20} />
                 </button>
                 <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white flex items-center gap-2">
-                    <UserCog size={20} /> Edit User
+                    <UserCog size={20} /> Editar Usuario
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Username</label>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nombre de usuario</label>
                         <input name="username" defaultValue={user.username} required className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">New Password (optional)</label>
-                        <input name="password" type="password" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" placeholder="Leave empty to keep current" />
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nueva contraseña (opcional)</label>
+                        <input name="password" type="password" className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2" placeholder="Dejar vacío para mantener actual" />
                     </div>
 
                     <div className="flex items-center gap-2">
                         <input type="checkbox" name="isAdmin" id="isAdmin" defaultChecked={user.isAdmin} className="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
-                        <label htmlFor="isAdmin" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 select-none">Administrator Access</label>
+                        <label htmlFor="isAdmin" className="text-sm font-medium text-zinc-700 dark:text-zinc-300 select-none">Acceso de Administrador</label>
                     </div>
 
                     <div className="pt-2 flex justify-end gap-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-lg">Cancel</button>
-                        <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg">Save Changes</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-lg">Cancelar</button>
+                        <button type="submit" disabled={loading} className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg">Guardar Cambios</button>
                     </div>
                 </form>
             </div>
@@ -181,7 +181,7 @@ export function ExportDataButton() {
             className="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors font-medium text-sm"
         >
             {loading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-            Export Data
+            Exportar Datos
         </button>
     )
 }
@@ -194,7 +194,7 @@ export function ImportDataButton() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (!confirm('WARNING: Importing data will overwrite existing items with the same ID. Are you sure you want to proceed?')) {
+        if (!confirm('ADVERTENCIA: Importar datos sobrescribirá los elementos existentes con el mismo ID. ¿Estás seguro de que quieres continuar?')) {
             e.target.value = ''
             return
         }
@@ -206,11 +206,11 @@ export function ImportDataButton() {
             if (result.error) {
                 alert(result.error)
             } else {
-                alert('Data imported successfully! The page will reload.')
+                alert('¡Datos importados correctamente! La página se recargará.')
                 window.location.reload()
             }
         } catch (err) {
-            alert('Failed to read file')
+            alert('Error al leer el archivo')
         }
         setLoading(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -231,7 +231,7 @@ export function ImportDataButton() {
                 className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg transition-colors font-medium text-sm"
             >
                 {loading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
-                Import Data
+                Importar Datos
             </button>
         </>
     )

@@ -29,7 +29,7 @@ export default async function AdminPage() {
                     </Link>
                     <h1 className="text-3xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
                         <Shield className="text-indigo-600 dark:text-indigo-400" />
-                        Admin Dashboard
+                        Panel de Administración
                     </h1>
                     <div className="ml-auto flex gap-2">
                         <ImportDataButton />
@@ -40,7 +40,7 @@ export default async function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     {/* User List */}
                     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-                        <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">Users</h2>
+                        <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">Usuarios</h2>
                         <AdminUserList users={users} />
                     </div>
 
@@ -48,7 +48,7 @@ export default async function AdminPage() {
                     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6 h-fit">
                         <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white flex items-center gap-2">
                             <UserPlus size={20} />
-                            Create User
+                            Crear Usuario
                         </h2>
                         <AdminCreateUserForm />
                     </div>

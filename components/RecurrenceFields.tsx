@@ -20,13 +20,13 @@ export function RecurrenceFields({
     const [selectedDays, setSelectedDays] = useState<string[]>(initialWeekDays || [])
 
     const weekDays = [
-        { id: '1', label: 'Mo' },
-        { id: '2', label: 'Tu' },
-        { id: '3', label: 'We' },
-        { id: '4', label: 'Th' },
-        { id: '5', label: 'Fr' },
-        { id: '6', label: 'Sa' },
-        { id: '0', label: 'Su' },
+        { id: '1', label: 'Lu' },
+        { id: '2', label: 'Ma' },
+        { id: '3', label: 'Mi' },
+        { id: '4', label: 'Ju' },
+        { id: '5', label: 'Vi' },
+        { id: '6', label: 'Sá' },
+        { id: '0', label: 'Do' },
     ]
 
     const toggleDay = (id: string) => {
@@ -49,7 +49,7 @@ export function RecurrenceFields({
                     onChange={(e) => setIsRecurring(e.target.checked)}
                 />
                 <label htmlFor="isRecurring" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Repeat Task
+                    Repetir tarea
                 </label>
             </div>
 
@@ -57,21 +57,21 @@ export function RecurrenceFields({
                 <div className="space-y-3 pl-6 animate-in slide-in-from-top-2">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs text-zinc-500 mb-1">Frequency</label>
+                            <label className="block text-xs text-zinc-500 mb-1">Frecuencia</label>
                             <select
                                 name="recurrenceInterval"
                                 value={interval}
                                 onChange={(e) => setInterval(e.target.value)}
                                 className="w-full text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1.5"
                             >
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
+                                <option value="daily">Diariamente</option>
+                                <option value="weekly">Semanalmente</option>
+                                <option value="monthly">Mensualmente</option>
+                                <option value="yearly">Anualmente</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs text-zinc-500 mb-1">End Date (Optional)</label>
+                            <label className="block text-xs text-zinc-500 mb-1">Fecha fin (Opcional)</label>
                             <input
                                 type="date"
                                 name="recurrenceEndDate"
@@ -83,7 +83,7 @@ export function RecurrenceFields({
 
                     {interval === 'weekly' && (
                         <div>
-                            <label className="block text-xs text-zinc-500 mb-2">Repeat on</label>
+                            <label className="block text-xs text-zinc-500 mb-2">Repetir en</label>
                             <div className="flex gap-1 justify-between">
                                 {weekDays.map(day => (
                                     <button
@@ -105,7 +105,7 @@ export function RecurrenceFields({
 
                     {interval === 'monthly' && (
                         <div>
-                            <label className="block text-xs text-zinc-500 mb-1">Day of Month</label>
+                            <label className="block text-xs text-zinc-500 mb-1">Día del mes</label>
                             <input
                                 type="number"
                                 name="recurrenceDayOfMonth"
