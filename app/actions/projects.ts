@@ -113,44 +113,46 @@ export async function getProjectWithTasks(id: string) {
     const session = await getSession()
     if (!session?.userId) return null
 
-    // 1. Fetch project to check permissions and existence
-    let project = await prisma.project.findUnique({
-        where: { id },
-        include: {
-            owner: true,
-            sharedWith: true,
-            tags: true,
-            columns: {
-                orderBy: { order: 'asc' }
-            },
-            tasks: {
-                include: {
-                    subtasks: { orderBy: { createdAt: 'asc' } },
-                    creator: true,
-                    assignee: true,
-                    sharedWith: true,
-                    tags: true,
-                    project: {
-                        include: { columns: { orderBy: { order: 'asc' } } }
-                    },
-                    logs: {
-                        orderBy: { createdAt: 'desc' },
-                        include: {
-                            user: {
-                                select: { username: true }
-                            }
+    const PROJECT_INCLUDE = {
+        owner: true,
+        sharedWith: true,
+        tags: true,
+        columns: {
+            orderBy: { order: 'asc' } as const
+        },
+        tasks: {
+            include: {
+                subtasks: { orderBy: { createdAt: 'asc' } as const },
+                creator: true,
+                assignee: true,
+                sharedWith: true,
+                tags: true,
+                project: {
+                    include: { columns: { orderBy: { order: 'asc' } as const } }
+                },
+                logs: {
+                    orderBy: { createdAt: 'desc' } as const,
+                    include: {
+                        user: {
+                            select: { username: true }
                         }
                     }
-                },
-                orderBy: { createdAt: 'desc' }
-            }
+                }
+            },
+            orderBy: { createdAt: 'desc' } as const
         }
+    }
+
+    // 1. Fetch project to check permissions and existence
+    let project: any = await prisma.project.findUnique({
+        where: { id },
+        include: PROJECT_INCLUDE
     })
 
     if (!project) return null
 
     const isOwner = project.ownerId === session.userId
-    const isShared = project.sharedWith.some(u => u.id === session.userId)
+    const isShared = project.sharedWith.some((u: any) => u.id === session.userId)
 
     if (!isOwner && !isShared) {
         // Double check admin status if needed
@@ -173,33 +175,7 @@ export async function getProjectWithTasks(id: string) {
         // Refetch with new columns
         const updatedProject = await prisma.project.findUnique({
             where: { id },
-            include: {
-                owner: true,
-                sharedWith: true,
-                columns: {
-                    orderBy: { order: 'asc' }
-                },
-                tasks: {
-                    include: {
-                        subtasks: { orderBy: { createdAt: 'asc' } },
-                        creator: true,
-                        assignee: true,
-                        sharedWith: true,
-                        project: {
-                            include: { columns: { orderBy: { order: 'asc' } } }
-                        },
-                        logs: {
-                            orderBy: { createdAt: 'desc' },
-                            include: {
-                                user: {
-                                    select: { username: true }
-                                }
-                            }
-                        }
-                    },
-                    orderBy: { createdAt: 'desc' }
-                }
-            }
+            include: PROJECT_INCLUDE
         })
         if (updatedProject) {
             project = updatedProject
@@ -207,13 +183,13 @@ export async function getProjectWithTasks(id: string) {
     }
 
     // 3. Repair Orphaned Tasks (No Column ID or Invalid Column ID)
-    const validColumnIds = new Set(project.columns.map(c => c.id))
-    const orphanedTasks = project.tasks.filter(t => !t.columnId || !validColumnIds.has(t.columnId))
+    const validColumnIds = new Set(project.columns.map((c: any) => c.id))
+    const orphanedTasks = project.tasks.filter((t: any) => !t.columnId || !validColumnIds.has(t.columnId))
     if (orphanedTasks.length > 0 && project.columns.length > 0) {
         const firstColId = project.columns[0].id
         await prisma.task.updateMany({
             where: {
-                id: { in: orphanedTasks.map(t => t.id) }
+                id: { in: orphanedTasks.map((t: any) => t.id) }
             },
             data: {
                 columnId: firstColId
@@ -223,33 +199,7 @@ export async function getProjectWithTasks(id: string) {
         // Refetch project to get updated tasks
         const repairedProject = await prisma.project.findUnique({
             where: { id },
-            include: {
-                owner: true,
-                sharedWith: true,
-                columns: {
-                    orderBy: { order: 'asc' }
-                },
-                tasks: {
-                    include: {
-                        subtasks: { orderBy: { createdAt: 'asc' } },
-                        creator: true,
-                        assignee: true,
-                        sharedWith: true,
-                        project: {
-                            include: { columns: { orderBy: { order: 'asc' } } }
-                        },
-                        logs: {
-                            orderBy: { createdAt: 'desc' },
-                            include: {
-                                user: {
-                                    select: { username: true }
-                                }
-                            }
-                        }
-                    },
-                    orderBy: { createdAt: 'desc' }
-                }
-            }
+            include: PROJECT_INCLUDE
         })
         if (repairedProject) {
             project = repairedProject
@@ -265,7 +215,7 @@ export async function getProjectWithTasks(id: string) {
     nextWeek.setDate(today.getDate() + 7)
 
     // Sort tasks in memory
-    project.tasks.sort((a, b) => {
+    project.tasks.sort((a: any, b: any) => {
         // 1. Sort by Status Priority
         const sA = statusOrder[a.status] || 99
         const sB = statusOrder[b.status] || 99

@@ -285,8 +285,8 @@ export async function updateTask(id: string, formData: FormData) {
 
     // Handle Tags
     const tagsJson = formData.get('tags') as string
-    let tagConnect = []
-    let tagDisconnect = []
+    let tagConnect: any[] = []
+    let tagDisconnect: any[] = []
 
     if (tagsJson) {
         try {
