@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Todo Work",
   description: "IT Project Management and Task Tracking",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
