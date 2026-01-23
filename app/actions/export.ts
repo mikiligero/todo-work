@@ -156,8 +156,10 @@ export async function importData(jsonData: string) {
                     importance: t.importance,
                     dueDate: t.dueDate ? new Date(t.dueDate) : null,
                     projectId: projectId,
+                    columnId: t.columnId || null,
                     creatorId: t.creatorId,
                     assigneeId: t.assigneeId,
+                    assigneeName: t.assigneeName || null,
                     isRecurring: t.isRecurring,
                     recurrenceInterval: t.recurrenceInterval,
                     recurrenceWeekDays: t.recurrenceWeekDays,
@@ -167,19 +169,26 @@ export async function importData(jsonData: string) {
                     createdAt: t.createdAt ? new Date(t.createdAt) : undefined
                 }
 
-                if (tags && Array.isArray(tags)) {
-                    updateData.tags = {
-                        set: tags.map((tg: any) => ({ id: tg.id }))
-                    }
+                // Prepare relation data
+                const tagIds = (tags && Array.isArray(tags)) ? tags.map((tg: any) => ({ id: tg.id })) : []
+
+                // For update, we use 'set' to replace relations
+                const updatePayload = {
+                    ...updateData,
+                    tags: { set: tagIds }
+                }
+
+                // For create, we use 'connect'
+                const createPayload = {
+                    ...updateData,
+                    id: t.id,
+                    tags: { connect: tagIds }
                 }
 
                 await tx.task.upsert({
                     where: { id: t.id },
-                    update: updateData,
-                    create: {
-                        ...updateData,
-                        id: t.id
-                    }
+                    update: updatePayload,
+                    create: createPayload
                 })
 
                 if (subtasks && Array.isArray(subtasks)) {
